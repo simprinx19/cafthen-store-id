@@ -41,6 +41,7 @@ import { StorageService } from '../../storage';
 import { formatIDR, formatUSD, getStatusBadgeClass } from '../../utils/formatters';
 import { validateUserProfile } from '../../utils/userValidation';
 import { DigitalContractModal } from '../Marketplace/DigitalContractModal';
+import { GoogleDocsManager } from './GoogleDocsManager';
 
 interface UserDashboardProps {
   currentUser: UserProfile;
@@ -59,7 +60,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   onDataUpdated,
   onNavigateToMarketplace
 }) => {
-  const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'chat'>('orders');
+  const [activeTab, setActiveTab] = useState<'orders' | 'profile' | 'chat' | 'docs'>('orders');
   const [selectedContract, setSelectedContract] = useState<DigitalContract | null>(null);
 
   // Profile Edit States
@@ -89,6 +90,7 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
   const ktpInputRef = useRef<HTMLInputElement>(null);
   const npwpInputRef = useRef<HTMLInputElement>(null);
   const comproInputRef = useRef<HTMLInputElement>(null);
+  const proofInputRef = useRef<HTMLInputElement>(null);
 
   // Sync profile fields if currentUser prop updates
   useEffect(() => {
@@ -467,6 +469,18 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
           >
             <MessageSquare className="w-4 h-4 shrink-0" />
             <span>Chat Konsultasi Admin</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('docs')}
+            className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 whitespace-nowrap transition-all cursor-pointer ${
+              activeTab === 'docs'
+                ? 'bg-blue-900 text-white shadow-sm'
+                : 'bg-white text-slate-700 hover:bg-slate-50 border border-slate-200'
+            }`}
+          >
+            <FileText className="w-4 h-4 shrink-0 text-blue-600" />
+            <span>Google Docs & Drive</span>
           </button>
         </div>
 
@@ -1272,6 +1286,15 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             </form>
           </div>
         )}
+
+        {/* TAB 4: GOOGLE DOCS & DRIVE MANAGER */}
+        {activeTab === 'docs' && (
+          <GoogleDocsManager
+            currentUser={currentUser}
+            orders={userOrders}
+            showToast={(msg) => alert(msg)}
+          />
+        )}
       </div>
 
       {/* Contract Detail Modal */}
@@ -1298,13 +1321,39 @@ export const UserDashboard: React.FC<UserDashboardProps> = ({
             <form onSubmit={handleUploadPaymentProof} className="space-y-4 text-xs">
               <div>
                 <label className="block font-bold text-slate-700 mb-1">URL Gambar / Slip Bukti Transfer *</label>
-                <input
-                  type="url"
-                  required
-                  value={proofUrl}
-                  onChange={(e) => setProofUrl(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                />
+                <div className="flex gap-2">
+                  <input
+                    type="url"
+                    required
+                    value={proofUrl}
+                    onChange={(e) => setProofUrl(e.target.value)}
+                    placeholder="https://... atau unggah dari perangkat"
+                    className="flex-1 px-3 py-2 rounded-xl border border-slate-300 focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => proofInputRef.current?.click()}
+                    className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 font-bold rounded-xl flex items-center gap-1.5 shrink-0 transition-colors cursor-pointer"
+                  >
+                    <Upload className="w-4 h-4" /> Unggah File
+                  </button>
+                  <input
+                    type="file"
+                    ref={proofInputRef}
+                    accept="image/png, image/jpeg, image/jpg, image/webp"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (uploadEvent) => {
+                        const resultStr = uploadEvent.target?.result as string;
+                        if (resultStr) setProofUrl(resultStr);
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                </div>
               </div>
 
               {proofUrl && (
