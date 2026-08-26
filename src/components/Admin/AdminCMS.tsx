@@ -264,57 +264,43 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       const updatedCompany: CompanyProfileData = {
         ...initialCompany,
         logoUrl: logoUrl || initialCompany.logoUrl || DEFAULT_CIP_LOGO,
-        companyName: companyName || initialCompany.companyName,
-        storeName: storeName || initialCompany.storeName,
-        address: address || initialCompany.address,
-        email: email || initialCompany.email,
-        phone: phone || initialCompany.phone,
-        owner: owner || initialCompany.owner,
-        director: director || initialCompany.director,
-        mapsUrl: mapsUrl || initialCompany.mapsUrl,
-        nib: nib || initialCompany.nib || '0220202931234',
-        ahukemenkumham: ahukemenkumham || initialCompany.ahukemenkumham || 'AHU-0012345.AH.01.01.TAHUN 2024',
-        npwp: npwp || initialCompany.npwp || '41.890.123.4-331.000',
-        aktaNotaris: aktaNotaris || initialCompany.aktaNotaris || 'Akta Notaris No. 12 Tanggal 15 Agustus 2024 (Notaris Hj. Faridah, SH., M.Kn)',
-        izinUsaha: izinUsaha || initialCompany.izinUsaha || 'Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI',
-        sertifikasi: sertifikasi || initialCompany.sertifikasi || 'ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)',
-        postalCode: postalCode || initialCompany.postalCode || '36361',
-        operationalHours: operationalHours || initialCompany.operationalHours || 'Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)',
-        tagline: tagline || initialCompany.tagline || 'Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya',
-        heroBadge: heroBadge || initialCompany.heroBadge || 'Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil',
-        heroTitle: heroTitle || initialCompany.heroTitle || 'Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil',
-        heroSubtitle: heroSubtitle || initialCompany.heroSubtitle || 'Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).',
-        heroCtaButton1: heroCtaButton1 || initialCompany.heroCtaButton1 || 'Buka Katalog Komoditas & Material',
-        heroCtaButton2: heroCtaButton2 || initialCompany.heroCtaButton2 || 'Konsultasi & Penawaran Resmi',
-        taxSystemLabel: taxSystemLabel || initialCompany.taxSystemLabel || 'ECoretax DJP Integrated',
-        profileSectionBadge: profileSectionBadge || initialCompany.profileSectionBadge || 'PROFIL & KEGIATAN PERUSAHAAN',
-        profileSectionTitle: profileSectionTitle || initialCompany.profileSectionTitle || 'Dedikasi, Integritas & Rantai Pasok Skala Nasional',
-        profileSectionDescription: profileSectionDescription || initialCompany.profileSectionDescription || 'PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi, berfokus pada integrasi sektor perdagangan komoditas sumber daya, pengadaan barang & jasa, serta rekayasa konstruksi sipil.',
-        tradingTitle: tradingTitle || initialCompany.tradingTitle || 'Perdagangan Komoditas (General Trading)',
-        tradingDesc: tradingDesc || initialCompany.tradingDesc || 'Penyedia pasokan batubara kalori GAR 4200 - 5000 kcal/kg, agregat batu split, pasir silika, dan komoditas industri dengan jaminan legalitas IUP resmi dan sertifikasi surveyor independen (Sucofindo / Carsurin).',
-        tradingPoints: initialCompany.tradingPoints || [
-          'Skema FOB Tongkang & Mother Vessel',
-          'COA & COW Analisis Kualitas Lengkap'
-        ],
-        procurementTitle: procurementTitle || initialCompany.procurementTitle || 'Pengadaan Barang & Jasa (Procurement)',
-        procurementDesc: procurementDesc || initialCompany.procurementDesc || 'Pengadaan material besi beton SNI 2052:2017 berbagai diameter, semen curah Portland Composite Cement (PCC), sewa armada alat berat (Excavator PC200/Bulldozer), dan perlengkapan logistik proyek.',
-        procurementPoints: initialCompany.procurementPoints || [
-          'Pola Pengiriman Franco sampai di Lokasi Proyek',
-          'Terdaftar Sistem Perpajakan Resmi ECoretax DJP'
-        ],
-        constructionTitle: constructionTitle || initialCompany.constructionTitle || 'Konstruksi Bangunan Sipil & Infrastruktur',
-        constructionDesc: constructionDesc || initialCompany.constructionDesc || 'Pelaksanaan pekerjaan konstruksi bangunan gedung, pergudangan baja struktural, jalan rigid pavement beton, jembatan, penataan lahan (land clearing), dan saluran drainase terpadu.',
-        constructionPoints: initialCompany.constructionPoints || [
-          'Tenaga Ahli Bersertifikat SKA / SKK LPJK PUPR',
-          'Standar K3 & Asuransi Konstruksi Menyeluruh'
-        ],
-        footerAbout: footerAbout || initialCompany.footerAbout || 'Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.',
-        youtubeVideoUrl: youtubeVideoUrl || initialCompany.youtubeVideoUrl || '',
-        youtubeVideoTitle: youtubeVideoTitle || initialCompany.youtubeVideoTitle || '',
-        visi: visi || initialCompany.visi || '',
-        misi: misi || initialCompany.misi || [],
-        bankAccounts: initialCompany.bankAccounts || [],
-        qrisImageUrl: initialCompany.qrisImageUrl || ''
+        companyName,
+        storeName,
+        address,
+        email,
+        phone,
+        owner,
+        director,
+        mapsUrl,
+        nib,
+        ahukemenkumham,
+        npwp,
+        aktaNotaris,
+        izinUsaha,
+        sertifikasi,
+        postalCode,
+        operationalHours,
+        tagline,
+        heroBadge,
+        heroTitle,
+        heroSubtitle,
+        heroCtaButton1,
+        heroCtaButton2,
+        taxSystemLabel,
+        profileSectionBadge,
+        profileSectionTitle,
+        profileSectionDescription,
+        tradingTitle,
+        tradingDesc,
+        procurementTitle,
+        procurementDesc,
+        constructionTitle,
+        constructionDesc,
+        footerAbout,
+        youtubeVideoUrl,
+        youtubeVideoTitle,
+        visi,
+        misi
       };
 
       const success = await StorageService.saveCompanyProfile(updatedCompany);
@@ -869,7 +855,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={companyName}
-                    onChange={(e) => setCompanyName(e.target.value)}
+                    onChange={(e) => { setCompanyName(e.target.value); setIsDirty(true); }}
                     placeholder="PT. CAFTHEN INDO PROJECT"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
@@ -879,7 +865,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
+                    onChange={(e) => { setStoreName(e.target.value); setIsDirty(true); }}
                     placeholder="CAFTHEN STORE ID"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
@@ -889,7 +875,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={owner}
-                    onChange={(e) => setOwner(e.target.value)}
+                    onChange={(e) => { setOwner(e.target.value); setIsDirty(true); }}
                     placeholder="Vian Alfianto"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
@@ -899,7 +885,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={director}
-                    onChange={(e) => setDirector(e.target.value)}
+                    onChange={(e) => { setDirector(e.target.value); setIsDirty(true); }}
                     placeholder="Amri"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
@@ -909,7 +895,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => { setEmail(e.target.value); setIsDirty(true); }}
                     placeholder="info@cafthen.co.id"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
@@ -919,7 +905,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => { setPhone(e.target.value); setIsDirty(true); }}
                     placeholder="+62 822-4993-9461"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
@@ -931,7 +917,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <input
                   type="text"
                   value={tagline}
-                  onChange={(e) => setTagline(e.target.value)}
+                  onChange={(e) => { setTagline(e.target.value); setIsDirty(true); }}
                   placeholder="Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                 />
@@ -942,7 +928,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <input
                   type="text"
                   value={operationalHours}
-                  onChange={(e) => setOperationalHours(e.target.value)}
+                  onChange={(e) => { setOperationalHours(e.target.value); setIsDirty(true); }}
                   placeholder="Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                 />
@@ -953,7 +939,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <textarea
                   rows={2}
                   value={address}
-                  onChange={(e) => setAddress(e.target.value)}
+                  onChange={(e) => { setAddress(e.target.value); setIsDirty(true); }}
                   placeholder="Jl. Lintas Timur Sumatera KM 18, Muaro Jambi, Provinsi Jambi, Indonesia"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                 />
@@ -965,7 +951,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="url"
                     value={mapsUrl}
-                    onChange={(e) => setMapsUrl(e.target.value)}
+                    onChange={(e) => { setMapsUrl(e.target.value); setIsDirty(true); }}
                     placeholder="https://maps.google.com/..."
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
                   />
@@ -975,7 +961,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
+                    onChange={(e) => { setPostalCode(e.target.value); setIsDirty(true); }}
                     placeholder="36361"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
                   />
@@ -1007,7 +993,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={nib}
-                    onChange={(e) => setNib(e.target.value)}
+                    onChange={(e) => { setNib(e.target.value); setIsDirty(true); }}
                     placeholder="0220202931234"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono font-bold text-blue-900"
                   />
@@ -1017,7 +1003,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={ahukemenkumham}
-                    onChange={(e) => setAhukemenkumham(e.target.value)}
+                    onChange={(e) => { setAhukemenkumham(e.target.value); setIsDirty(true); }}
                     placeholder="AHU-0012345.AH.01.01.TAHUN 2024"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
                   />
@@ -1027,7 +1013,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={npwp}
-                    onChange={(e) => setNpwp(e.target.value)}
+                    onChange={(e) => { setNpwp(e.target.value); setIsDirty(true); }}
                     placeholder="41.890.123.4-331.000"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
                   />
@@ -1037,7 +1023,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={aktaNotaris}
-                    onChange={(e) => setAktaNotaris(e.target.value)}
+                    onChange={(e) => { setAktaNotaris(e.target.value); setIsDirty(true); }}
                     placeholder="Akta Notaris No. 12 Tanggal 15 Agustus 2024"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
@@ -1049,7 +1035,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <input
                   type="text"
                   value={izinUsaha}
-                  onChange={(e) => setIzinUsaha(e.target.value)}
+                  onChange={(e) => { setIzinUsaha(e.target.value); setIsDirty(true); }}
                   placeholder="Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                 />
@@ -1060,7 +1046,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <input
                   type="text"
                   value={sertifikasi}
-                  onChange={(e) => setSertifikasi(e.target.value)}
+                  onChange={(e) => { setSertifikasi(e.target.value); setIsDirty(true); }}
                   placeholder="ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                 />
@@ -1085,7 +1071,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <input
                   type="text"
                   value={heroBadge}
-                  onChange={(e) => setHeroBadge(e.target.value)}
+                  onChange={(e) => { setHeroBadge(e.target.value); setIsDirty(true); }}
                   placeholder="Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                 />
@@ -1097,7 +1083,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <textarea
                   rows={2}
                   value={heroTitle}
-                  onChange={(e) => setHeroTitle(e.target.value)}
+                  onChange={(e) => { setHeroTitle(e.target.value); setIsDirty(true); }}
                   placeholder="Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil"
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-950 focus:ring-2 focus:ring-blue-600 focus:outline-none leading-snug"
                 />
@@ -1108,7 +1094,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <textarea
                   rows={3}
                   value={heroSubtitle}
-                  onChange={(e) => setHeroSubtitle(e.target.value)}
+                  onChange={(e) => { setHeroSubtitle(e.target.value); setIsDirty(true); }}
                   placeholder="Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI..."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none leading-relaxed"
                 />
@@ -1120,7 +1106,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={heroCtaButton1}
-                    onChange={(e) => setHeroCtaButton1(e.target.value)}
+                    onChange={(e) => { setHeroCtaButton1(e.target.value); setIsDirty(true); }}
                     placeholder="Buka Katalog Komoditas & Material"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-semibold"
                   />
@@ -1130,7 +1116,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={heroCtaButton2}
-                    onChange={(e) => setHeroCtaButton2(e.target.value)}
+                    onChange={(e) => { setHeroCtaButton2(e.target.value); setIsDirty(true); }}
                     placeholder="Konsultasi & Penawaran Resmi"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-semibold"
                   />
@@ -1140,7 +1126,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={taxSystemLabel}
-                    onChange={(e) => setTaxSystemLabel(e.target.value)}
+                    onChange={(e) => { setTaxSystemLabel(e.target.value); setIsDirty(true); }}
                     placeholder="ECoretax DJP Integrated"
                     className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
                   />
@@ -1170,7 +1156,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                     <input
                       type="text"
                       value={profileSectionBadge}
-                      onChange={(e) => setProfileSectionBadge(e.target.value)}
+                      onChange={(e) => { setProfileSectionBadge(e.target.value); setIsDirty(true); }}
                       placeholder="PROFIL & KEGIATAN PERUSAHAAN"
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                     />
@@ -1180,7 +1166,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                     <input
                       type="text"
                       value={profileSectionTitle}
-                      onChange={(e) => setProfileSectionTitle(e.target.value)}
+                      onChange={(e) => { setProfileSectionTitle(e.target.value); setIsDirty(true); }}
                       placeholder="Dedikasi, Integritas & Rantai Pasok Skala Nasional"
                       className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-bold"
                     />
@@ -1191,7 +1177,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <textarea
                     rows={2}
                     value={profileSectionDescription}
-                    onChange={(e) => setProfileSectionDescription(e.target.value)}
+                    onChange={(e) => { setProfileSectionDescription(e.target.value); setIsDirty(true); }}
                     placeholder="PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi..."
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none leading-relaxed"
                   />
@@ -1206,7 +1192,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={tradingTitle}
-                    onChange={(e) => setTradingTitle(e.target.value)}
+                    onChange={(e) => { setTradingTitle(e.target.value); setIsDirty(true); }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-bold"
                   />
                 </div>
@@ -1215,7 +1201,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <textarea
                     rows={2}
                     value={tradingDesc}
-                    onChange={(e) => setTradingDesc(e.target.value)}
+                    onChange={(e) => { setTradingDesc(e.target.value); setIsDirty(true); }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
                 </div>
@@ -1229,7 +1215,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={procurementTitle}
-                    onChange={(e) => setProcurementTitle(e.target.value)}
+                    onChange={(e) => { setProcurementTitle(e.target.value); setIsDirty(true); }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-bold"
                   />
                 </div>
@@ -1238,7 +1224,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <textarea
                     rows={2}
                     value={procurementDesc}
-                    onChange={(e) => setProcurementDesc(e.target.value)}
+                    onChange={(e) => { setProcurementDesc(e.target.value); setIsDirty(true); }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
                 </div>
@@ -1252,7 +1238,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <input
                     type="text"
                     value={constructionTitle}
-                    onChange={(e) => setConstructionTitle(e.target.value)}
+                    onChange={(e) => { setConstructionTitle(e.target.value); setIsDirty(true); }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-bold"
                   />
                 </div>
@@ -1261,7 +1247,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                   <textarea
                     rows={2}
                     value={constructionDesc}
-                    onChange={(e) => setConstructionDesc(e.target.value)}
+                    onChange={(e) => { setConstructionDesc(e.target.value); setIsDirty(true); }}
                     className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
                   />
                 </div>
@@ -1286,7 +1272,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 <textarea
                   rows={3}
                   value={footerAbout}
-                  onChange={(e) => setFooterAbout(e.target.value)}
+                  onChange={(e) => { setFooterAbout(e.target.value); setIsDirty(true); }}
                   placeholder="Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI..."
                   className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none leading-relaxed"
                 />
@@ -1821,7 +1807,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             <input
               type="text"
               value={youtubeVideoTitle}
-              onChange={(e) => setYoutubeVideoTitle(e.target.value)}
+              onChange={(e) => { setYoutubeVideoTitle(e.target.value); setIsDirty(true); }}
               className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
             />
           </div>
@@ -1830,7 +1816,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             <input
               type="url"
               value={youtubeVideoUrl}
-              onChange={(e) => setYoutubeVideoUrl(e.target.value)}
+              onChange={(e) => { setYoutubeVideoUrl(e.target.value); setIsDirty(true); }}
               placeholder="https://www.youtube.com/watch?v=... atau embed url"
               className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
             />
@@ -1839,9 +1825,10 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
           <div className="pt-3 flex justify-end">
             <button
               type="submit"
-              className="py-2.5 px-6 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow cursor-pointer"
+              disabled={isSaving}
+              className="py-2.5 px-6 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow cursor-pointer disabled:opacity-50"
             >
-              <Save className="w-4 h-4" /> Update Video YouTube
+              <Save className="w-4 h-4" /> {isSaving ? 'Menyimpan...' : 'Update Video YouTube'}
             </button>
           </div>
         </form>
@@ -1858,7 +1845,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
             <textarea
               rows={3}
               value={visi}
-              onChange={(e) => setVisi(e.target.value)}
+              onChange={(e) => { setVisi(e.target.value); setIsDirty(true); }}
               className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
             />
           </div>
@@ -1878,13 +1865,14 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                       const updated = [...misi];
                       updated[idx] = e.target.value;
                       setMisi(updated);
+                      setIsDirty(true);
                     }}
                     className="flex-1 bg-transparent text-xs text-slate-800 focus:outline-none font-medium"
                   />
                   <button
                     type="button"
-                    onClick={() => handleDeleteMisiPoint(idx)}
-                    className="text-rose-500 hover:text-rose-700 p-1"
+                    onClick={() => { handleDeleteMisiPoint(idx); setIsDirty(true); }}
+                    className="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -1902,7 +1890,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
               />
               <button
                 type="button"
-                onClick={handleAddMisiPoint}
+                onClick={() => { handleAddMisiPoint(); setIsDirty(true); }}
                 className="px-4 py-2 bg-slate-800 text-white text-xs font-bold rounded-lg cursor-pointer"
               >
                 Tambah
@@ -1913,9 +1901,10 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
           <div className="pt-3 flex justify-end">
             <button
               type="submit"
-              className="py-2.5 px-6 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow cursor-pointer"
+              disabled={isSaving}
+              className="py-2.5 px-6 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow cursor-pointer disabled:opacity-50"
             >
-              <Save className="w-4 h-4" /> Simpan Visi & Misi
+              <Save className="w-4 h-4" /> {isSaving ? 'Menyimpan...' : 'Simpan Visi & Misi'}
             </button>
           </div>
         </form>

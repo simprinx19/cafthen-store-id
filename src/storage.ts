@@ -539,8 +539,14 @@ export const StorageService = {
       ...stored
     };
   },
-  saveCompanyProfile(profile: CompanyProfileData): Promise<boolean> {
-    return setStored(KEYS.COMPANY_PROFILE, profile);
+  saveCompanyProfile(profile: Partial<CompanyProfileData>): Promise<boolean> {
+    const current = this.getCompanyProfile();
+    const merged: CompanyProfileData = {
+      ...INITIAL_COMPANY_PROFILE,
+      ...current,
+      ...profile
+    };
+    return setStored(KEYS.COMPANY_PROFILE, merged);
   },
 
   // Products

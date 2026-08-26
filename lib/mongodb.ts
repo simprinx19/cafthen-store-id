@@ -1,4 +1,5 @@
-import { MongoClient, MongoClientOptions, Db } from 'mongodb';
+import mongodb from 'mongodb';
+import type { MongoClientOptions, Db, MongoClient } from 'mongodb';
 import { attachDatabasePool } from '@vercel/functions';
 
 // Support db_MONGODB_URI (Vercel MongoDB integration), MONGODB_URI, and DATABASE_URL
@@ -29,7 +30,7 @@ if (process.env.NODE_ENV === 'development') {
   };
 
   if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options);
+    client = new mongodb.MongoClient(uri, options);
     try {
       attachDatabasePool(client);
     } catch {
@@ -41,7 +42,7 @@ if (process.env.NODE_ENV === 'development') {
   client = globalWithMongo._mongoClient!;
   clientPromise = globalWithMongo._mongoClientPromise;
 } else {
-  client = new MongoClient(uri, options);
+  client = new mongodb.MongoClient(uri, options);
   try {
     attachDatabasePool(client);
   } catch {
