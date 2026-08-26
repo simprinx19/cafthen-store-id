@@ -347,6 +347,52 @@ const handlePostData = async (req: express.Request, res: express.Response) => {
 app.post("/api/data", handlePostData);
 app.post("/data", handlePostData);
 
+// Reset & Re-Seed Database "db-compro" Endpoint
+const handleResetDb = async (req: express.Request, res: express.Response) => {
+  try {
+    const db = await getMongoDB();
+    if (!db) {
+      return res.status(503).json({ success: false, error: "Database MongoDB tidak terhubung" });
+    }
+    const collection = db.collection(COLLECTION_NAME);
+    
+    // Clear existing storage
+    await collection.deleteMany({});
+
+    // Bulk insert default initial values
+    const now = new Date();
+    const bulkOps = Object.entries(INITIAL_VALUES_MAP).map(([key, value]) => ({
+      updateOne: {
+        filter: { key },
+        update: { $set: { key, value, updatedAt: now } },
+        upsert: true
+      }
+    }));
+
+    if (bulkOps.length > 0) {
+      await collection.bulkWrite(bulkOps);
+    }
+
+    const resetData = { ...INITIAL_VALUES_MAP };
+    safeWriteLocalCache(resetData);
+
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+    res.json({
+      success: true,
+      message: `Database "${DB_NAME}" koleksi "${COLLECTION_NAME}" telah diset ulang dan di-seed ulang secara sempurna!`,
+      database: DB_NAME,
+      collection: COLLECTION_NAME,
+      data: resetData
+    });
+  } catch (err: any) {
+    console.error("Error resetting database:", err);
+    res.status(500).json({ success: false, error: err?.message || 'Failed to reset database' });
+  }
+};
+
+app.post("/api/reset-db", handleResetDb);
+app.post("/reset-db", handleResetDb);
+
 // Safeguard: Catch-all for any unhandled /api/* requests to return JSON instead of HTML
 app.use("/api/*", (req, res) => {
   res.status(404).json({ error: "API endpoint not found" });

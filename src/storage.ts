@@ -420,6 +420,27 @@ export const StorageService = {
     }
   },
 
+  async resetDatabase(): Promise<{ ok: boolean; message: string; database?: string }> {
+    try {
+      const res = await fetchWithRetry('/api/reset-db', { method: 'POST' }, 2);
+      if (res.ok) {
+        const data = await res.json();
+        localStorage.removeItem(PENDING_QUEUE_KEY);
+        localStorage.removeItem(LOCAL_UPDATES_KEY);
+        if (data.data && typeof data.data === 'object') {
+          for (const [k, v] of Object.entries(data.data)) {
+            localStorage.setItem(k, JSON.stringify(v));
+          }
+        }
+        window.dispatchEvent(new Event('cafthen_storage_updated'));
+        return { ok: true, message: data.message || 'Database "db-compro" diset ulang secara sukses', database: data.database };
+      }
+      throw new Error(`Reset error: HTTP ${res.status}`);
+    } catch (err: any) {
+      return { ok: false, message: err?.message || 'Reset database failed' };
+    }
+  },
+
   async flushPendingQueue(): Promise<boolean> {
     return flushPendingQueue();
   },

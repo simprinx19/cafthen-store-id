@@ -12,7 +12,15 @@
       "destination": "/api/index.ts"
     },
     {
+      "source": "/db-status",
+      "destination": "/api/index.ts"
+    },
+    {
       "source": "/data",
+      "destination": "/api/index.ts"
+    },
+    {
+      "source": "/reset-db",
       "destination": "/api/index.ts"
     },
     {
