@@ -46,7 +46,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const [isDraggingLogo, setIsDraggingLogo] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Profile Form States
+  // Profile & Legal Form States
   const [companyName, setCompanyName] = useState(initialCompany.companyName);
   const [storeName, setStoreName] = useState(initialCompany.storeName);
   const [address, setAddress] = useState(initialCompany.address);
@@ -55,6 +55,43 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const [owner, setOwner] = useState(initialCompany.owner);
   const [director, setDirector] = useState(initialCompany.director);
   const [mapsUrl, setMapsUrl] = useState(initialCompany.mapsUrl);
+
+  // Legalitas Lengkap
+  const [nib, setNib] = useState(initialCompany.nib || '0220202931234');
+  const [ahukemenkumham, setAhukemenkumham] = useState(initialCompany.ahukemenkumham || 'AHU-0012345.AH.01.01.TAHUN 2024');
+  const [npwp, setNpwp] = useState(initialCompany.npwp || '41.890.123.4-331.000');
+  const [aktaNotaris, setAktaNotaris] = useState(initialCompany.aktaNotaris || 'Akta Notaris No. 12 Tanggal 15 Agustus 2024 (Notaris Hj. Faridah, SH., M.Kn)');
+  const [izinUsaha, setIzinUsaha] = useState(initialCompany.izinUsaha || 'Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI');
+  const [sertifikasi, setSertifikasi] = useState(initialCompany.sertifikasi || 'ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)');
+  const [postalCode, setPostalCode] = useState(initialCompany.postalCode || '36361');
+  const [operationalHours, setOperationalHours] = useState(initialCompany.operationalHours || 'Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)');
+  const [tagline, setTagline] = useState(initialCompany.tagline || 'Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya');
+
+  // Hero Section Custom Texts
+  const [heroBadge, setHeroBadge] = useState(initialCompany.heroBadge || 'Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil');
+  const [heroTitle, setHeroTitle] = useState(initialCompany.heroTitle || 'Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil');
+  const [heroSubtitle, setHeroSubtitle] = useState(initialCompany.heroSubtitle || 'Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).');
+  const [heroCtaButton1, setHeroCtaButton1] = useState(initialCompany.heroCtaButton1 || 'Buka Katalog Komoditas & Material');
+  const [heroCtaButton2, setHeroCtaButton2] = useState(initialCompany.heroCtaButton2 || 'Konsultasi & Penawaran Resmi');
+  const [taxSystemLabel, setTaxSystemLabel] = useState(initialCompany.taxSystemLabel || 'ECoretax DJP Integrated');
+
+  // Profil & 3 Layanan Custom Texts
+  const [profileSectionBadge, setProfileSectionBadge] = useState(initialCompany.profileSectionBadge || 'PROFIL & KEGIATAN PERUSAHAAN');
+  const [profileSectionTitle, setProfileSectionTitle] = useState(initialCompany.profileSectionTitle || 'Dedikasi, Integritas & Rantai Pasok Skala Nasional');
+  const [profileSectionDescription, setProfileSectionDescription] = useState(initialCompany.profileSectionDescription || 'PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi, berfokus pada integrasi sektor perdagangan komoditas sumber daya, pengadaan barang & jasa, serta rekayasa konstruksi sipil.');
+  
+  const [tradingTitle, setTradingTitle] = useState(initialCompany.tradingTitle || 'Perdagangan Komoditas (General Trading)');
+  const [tradingDesc, setTradingDesc] = useState(initialCompany.tradingDesc || 'Penyedia pasokan batubara kalori GAR 4200 - 5000 kcal/kg, agregat batu split, pasir silika, dan komoditas industri dengan jaminan legalitas IUP resmi dan sertifikasi surveyor independen (Sucofindo / Carsurin).');
+  
+  const [procurementTitle, setProcurementTitle] = useState(initialCompany.procurementTitle || 'Pengadaan Barang & Jasa (Procurement)');
+  const [procurementDesc, setProcurementDesc] = useState(initialCompany.procurementDesc || 'Pengadaan material besi beton SNI 2052:2017 berbagai diameter, semen curah Portland Composite Cement (PCC), sewa armada alat berat (Excavator PC200/Bulldozer), dan perlengkapan logistik proyek.');
+  
+  const [constructionTitle, setConstructionTitle] = useState(initialCompany.constructionTitle || 'Konstruksi Bangunan Sipil & Infrastruktur');
+  const [constructionDesc, setConstructionDesc] = useState(initialCompany.constructionDesc || 'Pelaksanaan pekerjaan konstruksi bangunan gedung, pergudangan baja struktural, jalan rigid pavement beton, jembatan, penataan lahan (land clearing), dan saluran drainase terpadu.');
+
+  const [footerAbout, setFooterAbout] = useState(initialCompany.footerAbout || 'Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.');
+
+  const [profileSubSection, setProfileSubSection] = useState<'identitas' | 'legal' | 'hero' | 'layanan' | 'footer'>('identitas');
 
   // Video Form States
   const [youtubeVideoUrl, setYoutubeVideoUrl] = useState(initialCompany.youtubeVideoUrl);
@@ -76,6 +113,39 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     setOwner(initialCompany.owner);
     setDirector(initialCompany.director);
     setMapsUrl(initialCompany.mapsUrl);
+
+    setNib(initialCompany.nib || '0220202931234');
+    setAhukemenkumham(initialCompany.ahukemenkumham || 'AHU-0012345.AH.01.01.TAHUN 2024');
+    setNpwp(initialCompany.npwp || '41.890.123.4-331.000');
+    setAktaNotaris(initialCompany.aktaNotaris || 'Akta Notaris No. 12 Tanggal 15 Agustus 2024 (Notaris Hj. Faridah, SH., M.Kn)');
+    setIzinUsaha(initialCompany.izinUsaha || 'Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI');
+    setSertifikasi(initialCompany.sertifikasi || 'ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)');
+    setPostalCode(initialCompany.postalCode || '36361');
+    setOperationalHours(initialCompany.operationalHours || 'Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)');
+    setTagline(initialCompany.tagline || 'Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya');
+
+    setHeroBadge(initialCompany.heroBadge || 'Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil');
+    setHeroTitle(initialCompany.heroTitle || 'Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil');
+    setHeroSubtitle(initialCompany.heroSubtitle || 'Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).');
+    setHeroCtaButton1(initialCompany.heroCtaButton1 || 'Buka Katalog Komoditas & Material');
+    setHeroCtaButton2(initialCompany.heroCtaButton2 || 'Konsultasi & Penawaran Resmi');
+    setTaxSystemLabel(initialCompany.taxSystemLabel || 'ECoretax DJP Integrated');
+
+    setProfileSectionBadge(initialCompany.profileSectionBadge || 'PROFIL & KEGIATAN PERUSAHAAN');
+    setProfileSectionTitle(initialCompany.profileSectionTitle || 'Dedikasi, Integritas & Rantai Pasok Skala Nasional');
+    setProfileSectionDescription(initialCompany.profileSectionDescription || 'PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi, berfokus pada integrasi sektor perdagangan komoditas sumber daya, pengadaan barang & jasa, serta rekayasa konstruksi sipil.');
+
+    setTradingTitle(initialCompany.tradingTitle || 'Perdagangan Komoditas (General Trading)');
+    setTradingDesc(initialCompany.tradingDesc || 'Penyedia pasokan batubara kalori GAR 4200 - 5000 kcal/kg, agregat batu split, pasir silika, dan komoditas industri dengan jaminan legalitas IUP resmi dan sertifikasi surveyor independen (Sucofindo / Carsurin).');
+
+    setProcurementTitle(initialCompany.procurementTitle || 'Pengadaan Barang & Jasa (Procurement)');
+    setProcurementDesc(initialCompany.procurementDesc || 'Pengadaan material besi beton SNI 2052:2017 berbagai diameter, semen curah Portland Composite Cement (PCC), sewa armada alat berat (Excavator PC200/Bulldozer), dan perlengkapan logistik proyek.');
+
+    setConstructionTitle(initialCompany.constructionTitle || 'Konstruksi Bangunan Sipil & Infrastruktur');
+    setConstructionDesc(initialCompany.constructionDesc || 'Pelaksanaan pekerjaan konstruksi bangunan gedung, pergudangan baja struktural, jalan rigid pavement beton, jembatan, penataan lahan (land clearing), dan saluran drainase terpadu.');
+
+    setFooterAbout(initialCompany.footerAbout || 'Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.');
+
     setYoutubeVideoUrl(initialCompany.youtubeVideoUrl);
     setYoutubeVideoTitle(initialCompany.youtubeVideoTitle);
     setVisi(initialCompany.visi);
@@ -170,7 +240,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
     }
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const updatedCompany: CompanyProfileData = {
       ...initialCompany,
@@ -183,13 +253,38 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       owner,
       director,
       mapsUrl,
+      nib,
+      ahukemenkumham,
+      npwp,
+      aktaNotaris,
+      izinUsaha,
+      sertifikasi,
+      postalCode,
+      operationalHours,
+      tagline,
+      heroBadge,
+      heroTitle,
+      heroSubtitle,
+      heroCtaButton1,
+      heroCtaButton2,
+      taxSystemLabel,
+      profileSectionBadge,
+      profileSectionTitle,
+      profileSectionDescription,
+      tradingTitle,
+      tradingDesc,
+      procurementTitle,
+      procurementDesc,
+      constructionTitle,
+      constructionDesc,
+      footerAbout,
       youtubeVideoUrl,
       youtubeVideoTitle,
       visi,
       misi
     };
-    StorageService.saveCompanyProfile(updatedCompany);
-    triggerNotice('Data Profil Korporasi & Legalitas berhasil diperbarui!');
+    await StorageService.saveCompanyProfile(updatedCompany);
+    triggerNotice('Data Profil, Legalitas & Seluruh Teks Halaman Utama berhasil diperbarui dan tersimpan ke Database!');
     onDataUpdated();
   };
 
@@ -649,96 +744,496 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
         </div>
       )}
 
-      {/* SUBTAB 2: PROFIL & LEGALITAS */}
+      {/* SUBTAB 2: PROFIL, LEGALITAS & EDIT SELURUH TEKS HALAMAN UTAMA */}
       {subTab === 'profile' && (
-        <form onSubmit={handleSaveProfile} className="bg-white p-6 rounded-2xl border border-slate-200 space-y-4 shadow-sm">
-          <h4 className="font-bold text-base text-slate-900 border-b border-slate-100 pb-2">
-            Informasi Dasar Korporasi & Identitas Legal
-          </h4>
+        <form onSubmit={handleSaveProfile} className="space-y-6">
+          {/* Quick Sub-Navigation for Profile & Landing Page Editor */}
+          <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { id: 'identitas', label: '1. Identitas & Kontak' },
+                { id: 'legal', label: '2. Legalitas Resmi (NIB, AHU, NPWP)' },
+                { id: 'hero', label: '3. Teks Hero (Halaman Depan)' },
+                { id: 'layanan', label: '4. Teks Profil & 3 Layanan' },
+                { id: 'footer', label: '5. Teks Footer' }
+              ].map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setProfileSubSection(s.id as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                    profileSubSection === s.id
+                      ? 'bg-blue-900 text-white shadow-xs'
+                      : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Nama Perusahaan Resmi</label>
-              <input
-                type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Judul Toko / Store ID</label>
-              <input
-                type="text"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Owner & Komisaris</label>
-              <input
-                type="text"
-                value={owner}
-                onChange={(e) => setOwner(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Direktur Utama</label>
-              <input
-                type="text"
-                value={director}
-                onChange={(e) => setDirector(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Email Resmi</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Nomor Telpon / WhatsApp</label>
-              <input
-                type="text"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Alamat Lengkap Kantor Pusat</label>
-            <textarea
-              rows={2}
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 mb-1">Link Titik Google Maps</label>
-            <input
-              type="url"
-              value={mapsUrl}
-              onChange={(e) => setMapsUrl(e.target.value)}
-              className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
-            />
-          </div>
-
-          <div className="pt-3 flex justify-end">
             <button
               type="submit"
-              className="py-2.5 px-6 bg-blue-900 hover:bg-blue-800 text-white font-bold rounded-xl text-xs flex items-center gap-2 shadow cursor-pointer"
+              className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow cursor-pointer ml-auto"
             >
-              <Save className="w-4 h-4" /> Simpan Perubahan Profil
+              <Save className="w-4 h-4" /> Simpan Seluruh Teks & Legalitas
+            </button>
+          </div>
+
+          {/* SECTION 1: IDENTITAS & KONTAK */}
+          {profileSubSection === 'identitas' && (
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-3">
+                <h4 className="font-extrabold text-base text-slate-900">
+                  1. Informasi Identitas & Kontak Perusahaan
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Data ini digunakan pada navigasi, dokumen resmi, invoice, dan kontak CS.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Nama Perusahaan Resmi</label>
+                  <input
+                    type="text"
+                    value={companyName}
+                    onChange={(e) => setCompanyName(e.target.value)}
+                    placeholder="PT. CAFTHEN INDO PROJECT"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Judul Toko / Store ID (Katalog)</label>
+                  <input
+                    type="text"
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
+                    placeholder="CAFTHEN STORE ID"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Owner & Komisaris</label>
+                  <input
+                    type="text"
+                    value={owner}
+                    onChange={(e) => setOwner(e.target.value)}
+                    placeholder="Vian Alfianto"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Direktur Utama</label>
+                  <input
+                    type="text"
+                    value={director}
+                    onChange={(e) => setDirector(e.target.value)}
+                    placeholder="Amri"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Email Resmi</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="info@cafthen.co.id"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Nomor Telepon / WhatsApp CS</label>
+                  <input
+                    type="text"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="+62 822-4993-9461"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Slogan / Tagline Korporasi</label>
+                <input
+                  type="text"
+                  value={tagline}
+                  onChange={(e) => setTagline(e.target.value)}
+                  placeholder="Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Jam Operasional Kantor & Layanan</label>
+                <input
+                  type="text"
+                  value={operationalHours}
+                  onChange={(e) => setOperationalHours(e.target.value)}
+                  placeholder="Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Alamat Lengkap Kantor Pusat</label>
+                <textarea
+                  rows={2}
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  placeholder="Jl. Lintas Timur Sumatera KM 18, Muaro Jambi, Provinsi Jambi, Indonesia"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Link Titik Google Maps</label>
+                  <input
+                    type="url"
+                    value={mapsUrl}
+                    onChange={(e) => setMapsUrl(e.target.value)}
+                    placeholder="https://maps.google.com/..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Kode Pos</label>
+                  <input
+                    type="text"
+                    value={postalCode}
+                    onChange={(e) => setPostalCode(e.target.value)}
+                    placeholder="36361"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 2: LEGALITAS LENGKAP */}
+          {profileSubSection === 'legal' && (
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div>
+                  <h4 className="font-extrabold text-base text-slate-900">
+                    2. Legalitas Resmi, Nomor Izin & Sertifikasi Korporasi
+                  </h4>
+                  <p className="text-xs text-slate-500">
+                    Nomor-nomor hukum ini tampil pada Factsheet Legalitas Halaman Utama dan Surat Perjanjian Kontrak Digital (SPJB).
+                  </p>
+                </div>
+                <span className="px-3 py-1 bg-emerald-100 text-emerald-800 text-xs font-bold rounded-full">
+                  Dokumen Hukum Resmi
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Nomor Induk Berusaha (NIB OSS RBA)</label>
+                  <input
+                    type="text"
+                    value={nib}
+                    onChange={(e) => setNib(e.target.value)}
+                    placeholder="0220202931234"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono font-bold text-blue-900"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">SK Pengesahan Kemenkumham RI</label>
+                  <input
+                    type="text"
+                    value={ahukemenkumham}
+                    onChange={(e) => setAhukemenkumham(e.target.value)}
+                    placeholder="AHU-0012345.AH.01.01.TAHUN 2024"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">NPWP Resmi Perusahaan</label>
+                  <input
+                    type="text"
+                    value={npwp}
+                    onChange={(e) => setNpwp(e.target.value)}
+                    placeholder="41.890.123.4-331.000"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Akta Notaris Pendirian</label>
+                  <input
+                    type="text"
+                    value={aktaNotaris}
+                    onChange={(e) => setAktaNotaris(e.target.value)}
+                    placeholder="Akta Notaris No. 12 Tanggal 15 Agustus 2024"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Izin Usaha Operasional & PB-UMKU</label>
+                <input
+                  type="text"
+                  value={izinUsaha}
+                  onChange={(e) => setIzinUsaha(e.target.value)}
+                  placeholder="Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Sertifikasi Mutu, Standar & K3 Konstruksi</label>
+                <input
+                  type="text"
+                  value={sertifikasi}
+                  onChange={(e) => setSertifikasi(e.target.value)}
+                  placeholder="ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 3: EDIT TEKS HERO SECTION */}
+          {profileSubSection === 'hero' && (
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-3">
+                <h4 className="font-extrabold text-base text-slate-900">
+                  3. Pengaturan Teks Hero Section (Banner Atas Halaman Depan)
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Ubah teks judul besar, badge pengumuman/ekspor, paragraf deskripsi, dan tombol pada bagian atas halaman depan.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Badge Pengumuman Atas (Ticker Pill)</label>
+                <input
+                  type="text"
+                  value={heroBadge}
+                  onChange={(e) => setHeroBadge(e.target.value)}
+                  placeholder="Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                />
+                <p className="text-[11px] text-slate-400 mt-1">Badge ini muncul di bagian paling atas dengan ikon bintang bersinar.</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Judul Utama Hero (Heading 1)</label>
+                <textarea
+                  rows={2}
+                  value={heroTitle}
+                  onChange={(e) => setHeroTitle(e.target.value)}
+                  placeholder="Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil"
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-sm font-bold text-slate-950 focus:ring-2 focus:ring-blue-600 focus:outline-none leading-snug"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Paragraf Deskripsi Hero</label>
+                <textarea
+                  rows={3}
+                  value={heroSubtitle}
+                  onChange={(e) => setHeroSubtitle(e.target.value)}
+                  placeholder="Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none leading-relaxed"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Teks Tombol Aksi Utama 1</label>
+                  <input
+                    type="text"
+                    value={heroCtaButton1}
+                    onChange={(e) => setHeroCtaButton1(e.target.value)}
+                    placeholder="Buka Katalog Komoditas & Material"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Teks Tombol Aksi 2</label>
+                  <input
+                    type="text"
+                    value={heroCtaButton2}
+                    onChange={(e) => setHeroCtaButton2(e.target.value)}
+                    placeholder="Konsultasi & Penawaran Resmi"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-semibold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Label Sistem Pajak / Integrasi</label>
+                  <input
+                    type="text"
+                    value={taxSystemLabel}
+                    onChange={(e) => setTaxSystemLabel(e.target.value)}
+                    placeholder="ECoretax DJP Integrated"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-mono"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 4: EDIT TEKS PROFIL & 3 PILAR LAYANAN */}
+          {profileSubSection === 'layanan' && (
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-3">
+                <h4 className="font-extrabold text-base text-slate-900">
+                  4. Pengaturan Teks Bagian Profil & 3 Pilar Layanan
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Kustomisasi judul section profil dan rincian penjelasan 3 kartu layanan bisnis korporasi.
+                </p>
+              </div>
+
+              {/* Header Section Profil */}
+              <div className="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+                <span className="text-xs font-bold text-blue-900 uppercase">Header Bagian Profil</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Badge Kategori</label>
+                    <input
+                      type="text"
+                      value={profileSectionBadge}
+                      onChange={(e) => setProfileSectionBadge(e.target.value)}
+                      placeholder="PROFIL & KEGIATAN PERUSAHAAN"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Judul Bagian</label>
+                    <input
+                      type="text"
+                      value={profileSectionTitle}
+                      onChange={(e) => setProfileSectionTitle(e.target.value)}
+                      placeholder="Dedikasi, Integritas & Rantai Pasok Skala Nasional"
+                      className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-bold"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Paragraf Deskripsi Profil</label>
+                  <textarea
+                    rows={2}
+                    value={profileSectionDescription}
+                    onChange={(e) => setProfileSectionDescription(e.target.value)}
+                    placeholder="PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi..."
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none leading-relaxed"
+                  />
+                </div>
+              </div>
+
+              {/* Pilar 1: Trading */}
+              <div className="p-4 bg-amber-50/50 rounded-2xl border border-amber-200 space-y-3">
+                <span className="text-xs font-bold text-amber-900 uppercase">Pilar 1: Perdagangan Komoditas (General Trading)</span>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Judul Layanan</label>
+                  <input
+                    type="text"
+                    value={tradingTitle}
+                    onChange={(e) => setTradingTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Deskripsi Layanan & Pasokan</label>
+                  <textarea
+                    rows={2}
+                    value={tradingDesc}
+                    onChange={(e) => setTradingDesc(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Pilar 2: Procurement */}
+              <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-200 space-y-3">
+                <span className="text-xs font-bold text-blue-900 uppercase">Pilar 2: Pengadaan Barang & Jasa (Procurement)</span>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Judul Layanan</label>
+                  <input
+                    type="text"
+                    value={procurementTitle}
+                    onChange={(e) => setProcurementTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Deskripsi Layanan & Material</label>
+                  <textarea
+                    rows={2}
+                    value={procurementDesc}
+                    onChange={(e) => setProcurementDesc(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Pilar 3: Konstruksi Sipil */}
+              <div className="p-4 bg-emerald-50/50 rounded-2xl border border-emerald-200 space-y-3">
+                <span className="text-xs font-bold text-emerald-900 uppercase">Pilar 3: Konstruksi Bangunan Sipil & Infrastruktur</span>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Judul Layanan</label>
+                  <input
+                    type="text"
+                    value={constructionTitle}
+                    onChange={(e) => setConstructionTitle(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Deskripsi Layanan & Proyek</label>
+                  <textarea
+                    rows={2}
+                    value={constructionDesc}
+                    onChange={(e) => setConstructionDesc(e.target.value)}
+                    className="w-full px-3 py-2 rounded-lg border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SECTION 5: EDIT TEKS FOOTER */}
+          {profileSubSection === 'footer' && (
+            <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm space-y-6">
+              <div className="border-b border-slate-100 pb-3">
+                <h4 className="font-extrabold text-base text-slate-900">
+                  5. Pengaturan Teks Footer & Informasi Bawah
+                </h4>
+                <p className="text-xs text-slate-500">
+                  Ubah teks pengantar perusahaan yang muncul di bagian bawah website (footer).
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Deskripsi Singkat Footer</label>
+                <textarea
+                  rows={3}
+                  value={footerAbout}
+                  onChange={(e) => setFooterAbout(e.target.value)}
+                  placeholder="Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI..."
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs focus:ring-2 focus:ring-blue-600 focus:outline-none leading-relaxed"
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Bottom Save Action */}
+          <div className="p-4 bg-slate-900 text-white rounded-2xl flex items-center justify-between shadow-lg">
+            <div className="text-xs">
+              <p className="font-bold">Simpan Seluruh Pengaturan Profil, Legalitas & Teks</p>
+              <p className="text-slate-400 text-[11px]">Perubahan akan langsung sinkron ke Database & Halaman Depan.</p>
+            </div>
+            <button
+              type="submit"
+              className="py-2.5 px-6 bg-emerald-500 hover:bg-emerald-600 text-slate-950 font-black rounded-xl text-xs flex items-center gap-2 shadow cursor-pointer transition-colors"
+            >
+              <Save className="w-4 h-4" /> Simpan Semua Perubahan
             </button>
           </div>
         </form>

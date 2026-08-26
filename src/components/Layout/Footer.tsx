@@ -49,7 +49,7 @@ export const Footer: React.FC<FooterProps> = ({ company, onNavigate }) => {
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.
+              {company.footerAbout || 'Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.'}
             </p>
 
             <div className="p-3.5 bg-white/5 border border-white/10 rounded-2xl space-y-1 text-xs">

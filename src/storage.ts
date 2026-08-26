@@ -533,7 +533,11 @@ export const StorageService = {
 
   // Company Profile
   getCompanyProfile(): CompanyProfileData {
-    return getStored<CompanyProfileData>(KEYS.COMPANY_PROFILE, INITIAL_COMPANY_PROFILE);
+    const stored = getStored<CompanyProfileData>(KEYS.COMPANY_PROFILE, INITIAL_COMPANY_PROFILE);
+    return {
+      ...INITIAL_COMPANY_PROFILE,
+      ...stored
+    };
   },
   saveCompanyProfile(profile: CompanyProfileData): Promise<boolean> {
     return setStored(KEYS.COMPANY_PROFILE, profile);

@@ -4,7 +4,8 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
-import { MongoClient, Db } from "mongodb";
+import { Db } from "mongodb";
+import client, { getDb, MONGODB_URI, DB_NAME, COLLECTION_NAME } from "./lib/mongodb.ts";
 import * as mockData from "./src/mockData.ts";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -42,20 +43,7 @@ function safeReadLocalCache(): Record<string, any> {
   return inMemoryCache;
 }
 
-// MongoDB Atlas Configuration & Environment Variable Resolution
-const DEFAULT_MONGODB_URI = "mongodb+srv://Vercel-Admin-db_compro:A4UTfZd22cX8a9l7@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority";
-let MONGODB_URI = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
-
-// Filter out invalid/deprecated placeholder URIs
-if (!MONGODB_URI || MONGODB_URI.includes("atlas-lime-horizon") || (!MONGODB_URI.startsWith("mongodb://") && !MONGODB_URI.startsWith("mongodb+srv://"))) {
-  MONGODB_URI = DEFAULT_MONGODB_URI;
-}
-
-const DB_NAME = process.env.MONGODB_DB_NAME || process.env.DB_NAME || "db-compro";
-const COLLECTION_NAME = process.env.MONGODB_COLLECTION || process.env.COLLECTION_NAME || "app_storage";
-
 let cachedDb: Db | null = null;
-let mongoClientPromise: Promise<MongoClient> | null = null;
 
 // Complete map of all expected application keys with their default mock data fallbacks
 const INITIAL_VALUES_MAP: Record<string, any> = {
@@ -115,29 +103,8 @@ async function migrateLocalDataToMongoDB(db: Db) {
 
 async function getMongoDB(): Promise<Db | null> {
   if (cachedDb) return cachedDb;
-  if (!MONGODB_URI || (!MONGODB_URI.startsWith("mongodb://") && !MONGODB_URI.startsWith("mongodb+srv://"))) {
-    console.warn("[MongoDB] MONGODB_URI is not configured or is invalid.");
-    return null;
-  }
   try {
-    if (!mongoClientPromise) {
-      console.log(`[MongoDB] Connecting to MongoDB Atlas cluster (Database: ${DB_NAME})...`);
-      const client = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 8000,
-        connectTimeoutMS: 8000,
-        maxPoolSize: 10,
-        minPoolSize: 1,
-        retryWrites: true,
-      });
-      mongoClientPromise = client.connect().catch(err => {
-        mongoClientPromise = null;
-        cachedDb = null;
-        throw err;
-      });
-    }
-    
-    const client = await mongoClientPromise;
-    const db = client.db(DB_NAME);
+    const db = await getDb();
     cachedDb = db;
     
     // Seed initial keys in background if needed
@@ -149,7 +116,6 @@ async function getMongoDB(): Promise<Db | null> {
   } catch (err: any) {
     console.error("[MongoDB] Connection failed:", err?.message || err);
     cachedDb = null;
-    mongoClientPromise = null;
     return null;
   }
 }

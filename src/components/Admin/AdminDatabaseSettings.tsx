@@ -329,13 +329,13 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
           <div className="space-y-3 text-xs">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-mono font-bold text-slate-800">MONGODB_URI</span>
+                <span className="font-mono font-bold text-slate-800">db_MONGODB_URI &amp; MONGODB_URI</span>
                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[10px]">
-                  Terpasang & Aktif
+                  Terpasang &amp; Terhubung
                 </span>
               </div>
               <p className="text-slate-500 text-[11px]">
-                URI Koneksi Cluster MongoDB Atlas dengan otentikasi admin.
+                URI Koneksi Cluster MongoDB Atlas (Database: <code className="text-emerald-700 font-bold">db-compro</code>).
               </p>
               <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 font-mono text-[10px] text-slate-600">
                 <span className="truncate">mongodb+srv://Vercel-Admin-db_compro:***@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority</span>
@@ -347,6 +347,30 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
                   {copiedKey === 'uri' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
               </div>
+            </div>
+
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-slate-800">Vercel Database Pool (@vercel/functions)</span>
+                <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-md font-bold text-[10px]">
+                  attachDatabasePool(client)
+                </span>
+              </div>
+              <p className="text-slate-500 text-[11px]">
+                Koneksi MongoClient menggunakan appName: <code className="text-indigo-600 font-mono font-bold">devrel.vercel.integration</code> dan pooling otomatis.
+              </p>
+            </div>
+
+            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
+              <div className="flex items-center justify-between">
+                <span className="font-mono font-bold text-slate-800">Prisma Schema (prisma/schema.prisma)</span>
+                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[10px]">
+                  provider = "mongodb"
+                </span>
+              </div>
+              <p className="text-slate-500 text-[11px]">
+                Skema Prisma aktif terhubung ke database <code className="text-slate-800 font-mono">db-compro</code>.
+              </p>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">

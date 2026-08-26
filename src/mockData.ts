@@ -200,7 +200,55 @@ export const INITIAL_COMPANY_PROFILE: CompanyProfileData = {
       accountHolder: 'PT. CAFTHEN INDO PROJECT'
     }
   ],
-  qrisImageUrl: 'https://images.unsplash.com/photo-1595079672139-545c0ec5ebba?auto=format&fit=crop&w=400&q=80'
+  qrisImageUrl: 'https://images.unsplash.com/photo-1595079672139-545c0ec5ebba?auto=format&fit=crop&w=400&q=80',
+
+  // Identitas & Legalitas Lengkap Perusahaan
+  nib: '0220202931234',
+  ahukemenkumham: 'AHU-0012345.AH.01.01.TAHUN 2024',
+  npwp: '41.890.123.4-331.000',
+  aktaNotaris: 'Akta Notaris No. 12 Tanggal 15 Agustus 2024 (Notaris Hj. Faridah, SH., M.Kn)',
+  izinUsaha: 'Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI',
+  sertifikasi: 'ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)',
+  postalCode: '36361',
+  operationalHours: 'Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)',
+  tagline: 'Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya',
+
+  // Teks Hero Section
+  heroBadge: 'Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil',
+  heroTitle: 'Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil',
+  heroSubtitle: 'Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).',
+  heroCtaButton1: 'Buka Katalog Komoditas & Material',
+  heroCtaButton2: 'Konsultasi & Penawaran Resmi',
+  taxSystemLabel: 'ECoretax DJP Integrated',
+
+  // Teks Bagian Profil & 3 Layanan Utama
+  profileSectionBadge: 'PROFIL & KEGIATAN PERUSAHAAN',
+  profileSectionTitle: 'Dedikasi, Integritas & Rantai Pasok Skala Nasional',
+  profileSectionDescription: 'PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi, berfokus pada integrasi sektor perdagangan komoditas sumber daya, pengadaan barang & jasa, serta rekayasa konstruksi sipil.',
+  
+  tradingTitle: 'Perdagangan Komoditas (General Trading)',
+  tradingDesc: 'Penyedia pasokan batubara kalori GAR 4200 - 5000 kcal/kg, agregat batu split, pasir silika, dan komoditas industri dengan jaminan legalitas IUP resmi dan sertifikasi surveyor independen (Sucofindo / Carsurin).',
+  tradingPoints: [
+    'Skema FOB Tongkang & Mother Vessel',
+    'COA & COW Analisis Kualitas Lengkap'
+  ],
+
+  procurementTitle: 'Pengadaan Barang & Jasa (Procurement)',
+  procurementDesc: 'Pengadaan material besi beton SNI 2052:2017 berbagai diameter, semen curah Portland Composite Cement (PCC), sewa armada alat berat (Excavator PC200/Bulldozer), dan perlengkapan logistik proyek.',
+  procurementPoints: [
+    'Pola Pengiriman Franco sampai di Lokasi Proyek',
+    'Terdaftar Sistem Perpajakan Resmi ECoretax DJP'
+  ],
+
+  constructionTitle: 'Konstruksi Bangunan Sipil & Infrastruktur',
+  constructionDesc: 'Pelaksanaan pekerjaan konstruksi bangunan gedung, pergudangan baja struktural, jalan rigid pavement beton, jembatan, penataan lahan (land clearing), dan saluran drainase terpadu.',
+  constructionPoints: [
+    'Tenaga Ahli Bersertifikat SKA / SKK LPJK PUPR',
+    'Standar K3 & Asuransi Konstruksi Menyeluruh'
+  ],
+
+  // Teks Footer
+  footerAbout: 'Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.'
 };
 
 export const INITIAL_TEAM_MEMBERS: TeamMember[] = [

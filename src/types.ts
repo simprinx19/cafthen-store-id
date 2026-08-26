@@ -297,6 +297,42 @@ export interface CompanyProfileData {
     accountHolder: string;
   }[];
   qrisImageUrl: string;
+
+  // Identitas & Legalitas Lengkap Perusahaan
+  nib?: string;
+  ahukemenkumham?: string;
+  npwp?: string;
+  aktaNotaris?: string;
+  izinUsaha?: string;
+  sertifikasi?: string;
+  postalCode?: string;
+  operationalHours?: string;
+  tagline?: string;
+
+  // Kustomisasi Teks & Keterangan Halaman Utama (Hero Section)
+  heroBadge?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  heroCtaButton1?: string;
+  heroCtaButton2?: string;
+  taxSystemLabel?: string;
+
+  // Kustomisasi Teks Profil & 3 Layanan Utama
+  profileSectionBadge?: string;
+  profileSectionTitle?: string;
+  profileSectionDescription?: string;
+  tradingTitle?: string;
+  tradingDesc?: string;
+  tradingPoints?: string[];
+  procurementTitle?: string;
+  procurementDesc?: string;
+  procurementPoints?: string[];
+  constructionTitle?: string;
+  constructionDesc?: string;
+  constructionPoints?: string[];
+
+  // Kustomisasi Teks Bagian Bawah / Footer
+  footerAbout?: string;
 }
 
 export interface ChatMessage {

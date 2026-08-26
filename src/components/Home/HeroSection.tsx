@@ -99,27 +99,15 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
             {/* Theme Badge for the 5 Core Business Lines */}
             <div className="inline-flex flex-wrap items-center gap-1.5 sm:gap-2 p-1.5 px-3 bg-amber-400/10 border border-amber-400/30 rounded-full text-[11px] sm:text-xs text-amber-300 font-semibold backdrop-blur-md">
               <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>Kegiatan Ekspor</span>
-              <span className="text-slate-500">•</span>
-              <span>Produksi Arang Batok</span>
-              <span className="text-slate-500">•</span>
-              <span>Penjualan Kelapa Tua</span>
-              <span className="text-slate-500">•</span>
-              <span>Cangkang Sawit</span>
-              <span className="text-slate-500">•</span>
-              <span>Konstruksi Sipil</span>
+              <span>{company.heroBadge || 'Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil'}</span>
             </div>
 
             <h1 className="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight leading-snug sm:leading-[1.18] text-white">
-              Solusi Terpadu <br />
-              <span className="bg-gradient-to-r from-amber-400 via-amber-300 to-yellow-500 bg-clip-text text-transparent">
-                Perdagangan Komoditas,
-              </span>{' '}
-              Pengadaan & Konstruksi Sipil
+              {company.heroTitle || 'Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil'}
             </h1>
 
             <p className="text-sm sm:text-base text-slate-300 max-w-2xl font-normal leading-relaxed">
-              Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).
+              {company.heroSubtitle || 'Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).'}
             </p>
 
             {/* Leadership & Legal Assurance */}
@@ -134,7 +122,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
               </div>
               <div className="sm:border-l sm:border-white/15 sm:pl-3">
                 <span className="text-[10px] text-amber-400 uppercase font-bold block">Sistem Perpajakan</span>
-                <span className="font-semibold text-emerald-400 truncate block">ECoretax DJP Integrated</span>
+                <span className="font-semibold text-emerald-400 truncate block">{company.taxSystemLabel || 'ECoretax DJP Integrated'}</span>
               </div>
             </div>
 
@@ -144,7 +132,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 onClick={onExploreMarketplace}
                 className="w-full sm:w-auto px-6 sm:px-7 py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold rounded-xl shadow-lg shadow-amber-500/20 hover:shadow-amber-500/30 transition-all flex items-center justify-center gap-2.5 text-xs sm:text-sm cursor-pointer transform hover:-translate-y-0.5"
               >
-                <span>Jelajahi Katalog Produk</span>
+                <span>{company.heroCtaButton1 || 'Jelajahi Katalog Produk'}</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
@@ -153,7 +141,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
                 className="w-full sm:w-auto px-5 sm:px-6 py-3.5 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold rounded-xl backdrop-blur-md transition-all flex items-center justify-center gap-2 text-xs sm:text-sm cursor-pointer"
               >
                 <PhoneCall className="w-4 h-4 text-amber-400" />
-                <span>Konsultasi & Kontak Resmi</span>
+                <span>{company.heroCtaButton2 || 'Konsultasi & Kontak Resmi'}</span>
               </button>
             </div>
           </motion.div>
