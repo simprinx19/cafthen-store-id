@@ -5,6 +5,7 @@ import fs from "fs";
 import { fileURLToPath } from "url";
 import { createServer as createViteServer } from "vite";
 import { MongoClient, Db } from "mongodb";
+import * as mockData from "./src/mockData.ts";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -27,36 +28,79 @@ const COLLECTION_NAME = "app_storage";
 let cachedDb: Db | null = null;
 let mongoClient: MongoClient | null = null;
 
+// Complete map of all expected application keys with their default mock data fallbacks
+const INITIAL_VALUES_MAP: Record<string, any> = {
+  cafthen_company_profile: mockData.INITIAL_COMPANY_PROFILE,
+  cafthen_products: mockData.INITIAL_PRODUCTS,
+  cafthen_team_members: mockData.INITIAL_TEAM_MEMBERS,
+  cafthen_activities: mockData.INITIAL_ACTIVITY_PHOTOS,
+  cafthen_users: mockData.INITIAL_USERS,
+  cafthen_orders: mockData.INITIAL_ORDERS,
+  cafthen_expenses: mockData.INITIAL_EXPENSES,
+  cafthen_messages: mockData.INITIAL_MESSAGES,
+  cafthen_notifications: mockData.INITIAL_NOTIFICATIONS,
+  cafthen_payment_settings: mockData.INITIAL_PAYMENT_SETTINGS,
+  cafthen_exchange_rate: 17685,
+  cafthen_admin_logged_in: false,
+};
+
 async function migrateLocalDataToMongoDB(db: Db) {
   try {
     const collection = db.collection(COLLECTION_NAME);
+    
+    // 1. Read existing local data.json file
+    let localData: Record<string, any> = {};
     if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-      const data = JSON.parse(raw || '{}');
-      const entries = Object.entries(data);
-      if (entries.length > 0) {
-        console.log(`[MongoDB] Checking progressive migration for ${entries.length} keys to MongoDB database "${DB_NAME}"...`);
-        let migratedCount = 0;
-        for (const [key, value] of entries) {
-          const exists = await collection.findOne({ key });
-          if (!exists) {
-            await collection.updateOne(
-              { key },
-              { $set: { key, value, updatedAt: new Date() } },
-              { upsert: true }
-            );
-            migratedCount++;
-          }
-        }
-        if (migratedCount > 0) {
-          console.log(`[MongoDB] Migrated ${migratedCount} missing keys from local data.json to MongoDB successfully!`);
-        } else {
-          console.log("[MongoDB] All keys are already fully up to date in MongoDB database.");
-        }
+      try {
+        const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+        localData = JSON.parse(raw || '{}');
+      } catch (e) {
+        localData = {};
       }
     }
+
+    console.log(`[MongoDB] Synchronizing database "${DB_NAME}" keys and ensuring all initial values are fully seeded...`);
+    let seedCount = 0;
+    let localSyncCount = 0;
+
+    // 2. Iterate through all required keys to ensure they exist both in MongoDB and local cache
+    for (const [key, defaultValue] of Object.entries(INITIAL_VALUES_MAP)) {
+      const existsInDb = await collection.findOne({ key });
+      
+      if (existsInDb) {
+        // Key exists in MongoDB - ensure local cache has it and matches it
+        const dbValueStr = JSON.stringify(existsInDb.value);
+        const localValueStr = JSON.stringify(localData[key]);
+        if (localData[key] === undefined || localValueStr !== dbValueStr) {
+          localData[key] = existsInDb.value;
+          localSyncCount++;
+        }
+      } else {
+        // Key is missing from MongoDB - we must seed/migrate it!
+        // We prefer local file cache value if present, otherwise we fallback to the default mock data
+        const valueToSave = localData[key] !== undefined ? localData[key] : defaultValue;
+        
+        await collection.updateOne(
+          { key },
+          { $set: { key, value: valueToSave, updatedAt: new Date() } },
+          { upsert: true }
+        );
+        
+        localData[key] = valueToSave;
+        seedCount++;
+      }
+    }
+
+    // 3. Save the fully updated cache back to local file
+    fs.writeFileSync(DATA_FILE, JSON.stringify(localData, null, 2), 'utf-8');
+
+    if (seedCount > 0 || localSyncCount > 0) {
+      console.log(`[MongoDB] Sync complete: seeded ${seedCount} missing keys to DB, updated ${localSyncCount} keys in local data.json.`);
+    } else {
+      console.log("[MongoDB] All keys are already fully synchronized and up to date in MongoDB.");
+    }
   } catch (error) {
-    console.error("[MongoDB] Failed to migrate local data to MongoDB:", error);
+    console.error("[MongoDB] Failed during database seeding & sync:", error);
   }
 }
 
@@ -116,18 +160,9 @@ app.get("/api/health", async (req, res) => {
 // Get all stored keys/data
 app.get("/api/data", async (req, res) => {
   try {
-    // 1. Start with local cache baseline (to ensure no missing fields/keys)
     let result: Record<string, any> = {};
-    if (fs.existsSync(DATA_FILE)) {
-      try {
-        const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-        result = JSON.parse(raw || '{}');
-      } catch (e) {
-        result = {};
-      }
-    }
 
-    // 2. Fetch all keys from MongoDB and merge them on top of the baseline
+    // 1. Fetch all keys from MongoDB
     const db = await getMongoDB();
     if (db) {
       const collection = db.collection(COLLECTION_NAME);
@@ -138,6 +173,34 @@ app.get("/api/data", async (req, res) => {
             result[doc.key] = doc.value;
           }
         });
+      }
+    } else {
+      // Fallback to local cache only if MongoDB is offline
+      if (fs.existsSync(DATA_FILE)) {
+        try {
+          const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+          result = JSON.parse(raw || '{}');
+        } catch (e) {
+          result = {};
+        }
+      }
+    }
+
+    // 2. Ensure all expected application keys are present by filling in any missing keys with defaults
+    let updatedLocalCache = false;
+    for (const [key, defaultValue] of Object.entries(INITIAL_VALUES_MAP)) {
+      if (result[key] === undefined) {
+        result[key] = defaultValue;
+        updatedLocalCache = true;
+      }
+    }
+
+    // 3. Keep local data.json synchronized as a persistent backup baseline
+    if (updatedLocalCache || !fs.existsSync(DATA_FILE)) {
+      try {
+        fs.writeFileSync(DATA_FILE, JSON.stringify(result, null, 2), 'utf-8');
+      } catch (e) {
+        console.error("Failed to write baseline to DATA_FILE:", e);
       }
     }
 
