@@ -17,14 +17,39 @@ if (!fs.existsSync(DATA_FILE)) {
 }
 
 // MongoDB Atlas Configuration
-// Cluster: atlas-lime-horizon (ID: 6a8de2f7929db3cd6d6a609b)
-const MONGODB_URI = process.env.MONGODB_URI || "";
-const DB_NAME = "cafthen_db";
+const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://Vercel-Admin-db_compro:A4UTfZd22cX8a9l7@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority";
+const DB_NAME = "db-compro";
 const COLLECTION_NAME = "app_storage";
 
 let cachedDb: Db | null = null;
 let mongoClient: MongoClient | null = null;
 let mongoFailed = false;
+
+async function migrateLocalDataToMongoDB(db: Db) {
+  try {
+    const collection = db.collection(COLLECTION_NAME);
+    const count = await collection.countDocuments();
+    if (count === 0 && fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+      const data = JSON.parse(raw || '{}');
+      const entries = Object.entries(data);
+      if (entries.length > 0) {
+        console.log(`Migrating ${entries.length} keys from local data.json to MongoDB database "${DB_NAME}"`);
+        const bulkOps = entries.map(([k, v]) => ({
+          updateOne: {
+            filter: { key: k },
+            update: { $set: { key: k, value: v, updatedAt: new Date() } },
+            upsert: true
+          }
+        }));
+        await collection.bulkWrite(bulkOps);
+        console.log("Migration to MongoDB completed successfully!");
+      }
+    }
+  } catch (error) {
+    console.error("Failed to migrate local data to MongoDB:", error);
+  }
+}
 
 async function getMongoDB(): Promise<Db | null> {
   if (cachedDb) return cachedDb;
@@ -38,13 +63,15 @@ async function getMongoDB(): Promise<Db | null> {
         serverSelectionTimeoutMS: 2000,
       });
       await mongoClient.connect();
-      console.log("Successfully connected to MongoDB Atlas cluster: atlas-lime-horizon (ID: 6a8de2f7929db3cd6d6a609b)");
+      console.log(`Successfully connected to MongoDB database: ${DB_NAME}`);
+      const db = mongoClient.db(DB_NAME);
+      await migrateLocalDataToMongoDB(db);
     }
     cachedDb = mongoClient.db(DB_NAME);
     return cachedDb;
   } catch (err) {
     mongoFailed = true;
-    console.warn("MongoDB Atlas connection unavailable (falling back to local cache):", (err as Error)?.message || err);
+    console.warn("MongoDB connection unavailable (falling back to local cache):", (err as Error)?.message || err);
     return null;
   }
 }
@@ -61,7 +88,7 @@ app.get("/api/health", async (req, res) => {
   if (db) {
     try {
       await db.command({ ping: 1 });
-      dbStatus = "connected (atlas-lime-horizon)";
+      dbStatus = `connected (${DB_NAME})`;
     } catch (e) {
       dbStatus = "ping failed";
     }
@@ -69,7 +96,7 @@ app.get("/api/health", async (req, res) => {
   res.json({ 
     status: "ok", 
     timestamp: new Date().toISOString(), 
-    database: "MongoDB Atlas (atlas-lime-horizon)",
+    database: `MongoDB Atlas (${DB_NAME})`,
     dbStatus 
   });
 });
