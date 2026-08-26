@@ -52,6 +52,220 @@ const KEYS = {
 
 export const DEFAULT_EXCHANGE_RATE = 17685; // 1 USD = Rp 17.685 (Mengikuti Google Market Rate)
 
+// MongoDB Atlas Connection & Retry Types
+export type DbConnectionState = 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'error';
+
+export interface DbConnectionInfo {
+  state: DbConnectionState;
+  databaseName: string;
+  cluster: string;
+  lastSyncedAt: string | null;
+  lastError: string | null;
+  pendingQueueSize: number;
+  retryCount: number;
+  isOnline: boolean;
+}
+
+export interface PendingWriteItem {
+  id: string;
+  key: string;
+  value: any;
+  timestamp: number;
+  retryAttempts: number;
+}
+
+const DB_NAME = 'db-compro';
+const CLUSTER_NAME = 'MongoDB Atlas (db-compro)';
+const PENDING_QUEUE_KEY = 'cafthen_pending_db_sync_queue';
+const MAX_RETRY_ATTEMPTS = 4;
+const INITIAL_BACKOFF_MS = 1000;
+const MAX_BACKOFF_MS = 8000;
+const REQUEST_TIMEOUT_MS = 12000;
+
+let currentDbStatus: DbConnectionInfo = {
+  state: 'connecting',
+  databaseName: DB_NAME,
+  cluster: CLUSTER_NAME,
+  lastSyncedAt: null,
+  lastError: null,
+  pendingQueueSize: 0,
+  retryCount: 0,
+  isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+};
+
+function getPendingQueue(): PendingWriteItem[] {
+  try {
+    const raw = localStorage.getItem(PENDING_QUEUE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function savePendingQueue(queue: PendingWriteItem[]): void {
+  try {
+    localStorage.setItem(PENDING_QUEUE_KEY, JSON.stringify(queue));
+    currentDbStatus.pendingQueueSize = queue.length;
+  } catch (e) {
+    console.error('Failed to persist sync queue to localStorage:', e);
+  }
+}
+
+function enqueuePendingWrite(key: string, value: any): void {
+  const queue = getPendingQueue();
+  const existingIdx = queue.findIndex(item => item.key === key);
+  const newItem: PendingWriteItem = {
+    id: `write-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    key,
+    value,
+    timestamp: Date.now(),
+    retryAttempts: 0
+  };
+
+  if (existingIdx >= 0) {
+    queue[existingIdx] = newItem;
+  } else {
+    queue.push(newItem);
+  }
+
+  savePendingQueue(queue);
+  updateDbStatus({ pendingQueueSize: queue.length });
+}
+
+function updateDbStatus(partial: Partial<DbConnectionInfo>) {
+  currentDbStatus = {
+    ...currentDbStatus,
+    ...partial,
+    pendingQueueSize: getPendingQueue().length,
+    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true
+  };
+
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(
+      new CustomEvent('cafthen_db_status_changed', { detail: { ...currentDbStatus } })
+    );
+  }
+}
+
+// Robust Fetch with Exponential Backoff + Jitter
+async function fetchWithRetry(
+  url: string,
+  options: RequestInit = {},
+  maxRetries = MAX_RETRY_ATTEMPTS
+): Promise<Response> {
+  let attempt = 0;
+  let lastError: any = null;
+
+  while (attempt <= maxRetries) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        return response;
+      }
+
+      // If permanent client error 400-499 (excluding 429 Too Many Requests), throw immediately
+      if (response.status >= 400 && response.status < 500 && response.status !== 429) {
+        throw new Error(`HTTP Error ${response.status}: ${response.statusText}`);
+      }
+
+      throw new Error(`Server returned HTTP ${response.status} (${response.statusText})`);
+    } catch (err: any) {
+      lastError = err;
+      attempt++;
+
+      if (attempt > maxRetries) {
+        break;
+      }
+
+      const backoff = Math.min(
+        INITIAL_BACKOFF_MS * Math.pow(1.8, attempt - 1) + Math.random() * 500,
+        MAX_BACKOFF_MS
+      );
+
+      console.warn(
+        `[MongoDB Atlas Sync] Intermittent connection drop or error (${err?.message || 'Network error'}). Attempt ${attempt}/${maxRetries}. Retrying in ${Math.round(backoff)}ms...`
+      );
+
+      updateDbStatus({
+        state: 'reconnecting',
+        lastError: `Reconnecting to MongoDB Atlas (Attempt ${attempt}/${maxRetries}): ${err?.message || 'Network drop'}`,
+        retryCount: attempt
+      });
+
+      await new Promise((resolve) => setTimeout(resolve, backoff));
+    }
+  }
+
+  throw lastError || new Error('Request failed after retries');
+}
+
+let isFlushingQueue = false;
+
+async function flushPendingQueue(): Promise<boolean> {
+  if (isFlushingQueue) return false;
+  const queue = getPendingQueue();
+  if (queue.length === 0) return true;
+
+  isFlushingQueue = true;
+  try {
+    const queueCopy = [...queue];
+    const successfulIds: string[] = [];
+
+    for (const item of queueCopy) {
+      try {
+        const res = await fetchWithRetry(
+          '/api/data',
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: item.key, value: item.value })
+          },
+          2
+        );
+
+        if (res.ok) {
+          successfulIds.push(item.id);
+        }
+      } catch (err: any) {
+        console.warn(`[MongoDB Atlas Sync] Failed to flush queued write for key "${item.key}":`, err?.message);
+        break;
+      }
+    }
+
+    if (successfulIds.length > 0) {
+      const remainingQueue = getPendingQueue().filter(item => !successfulIds.includes(item.id));
+      savePendingQueue(remainingQueue);
+      updateDbStatus({ pendingQueueSize: remainingQueue.length });
+    }
+
+    return getPendingQueue().length === 0;
+  } finally {
+    isFlushingQueue = false;
+  }
+}
+
+// Auto-recovery listeners on browser
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    console.log('[MongoDB Atlas] Browser back online. Resuming sync & flushing write queue...');
+    updateDbStatus({ isOnline: true, state: 'reconnecting' });
+    StorageService.syncWithServer();
+  });
+
+  window.addEventListener('offline', () => {
+    console.warn('[MongoDB Atlas] Browser is offline. All writes will queue locally.');
+    updateDbStatus({ isOnline: false, state: 'disconnected', lastError: 'Perangkat sedang offline' });
+  });
+}
+
 function getStored<T>(key: string, fallback: T): T {
   try {
     const data = localStorage.getItem(key);
@@ -67,13 +281,12 @@ function setStored<T>(key: string, value: T): void {
     localStorage.setItem(key, JSON.stringify(value));
     window.dispatchEvent(new Event('cafthen_storage_updated'));
 
-    // Push update to backend server for cross-device persistence if available
-    fetch('/api/data', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ key, value })
-    }).catch(() => {
-      // Server sync optional - gracefully fallback to local storage
+    // Enqueue write to ensure cross-device persistence on MongoDB Atlas
+    enqueuePendingWrite(key, value);
+
+    // Attempt non-blocking flush with retry
+    flushPendingQueue().catch((err) => {
+      console.warn('[MongoDB Atlas] Write queued for background retry:', err?.message);
     });
   } catch (e) {
     console.error(`Error saving ${key} to storage:`, e);
@@ -81,10 +294,56 @@ function setStored<T>(key: string, value: T): void {
 }
 
 export const StorageService = {
-  // Sync with Server across devices
-  async syncWithServer(): Promise<void> {
+  // Connection & Diagnostics
+  getDbConnectionStatus(): DbConnectionInfo {
+    return {
+      ...currentDbStatus,
+      pendingQueueSize: getPendingQueue().length,
+      isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true
+    };
+  },
+
+  async checkDatabaseHealth(maxRetries = 2): Promise<{ ok: boolean; status: string; database?: string; error?: string }> {
     try {
-      const res = await fetch('/api/data');
+      const res = await fetchWithRetry('/api/health', { method: 'GET' }, maxRetries);
+      if (res.ok) {
+        const data = await res.json();
+        updateDbStatus({
+          state: 'connected',
+          lastError: null,
+          retryCount: 0
+        });
+        return { ok: true, status: data.dbStatus || 'connected', database: data.database };
+      }
+      throw new Error(`Health check returned status ${res.status}`);
+    } catch (err: any) {
+      updateDbStatus({
+        state: 'error',
+        lastError: err?.message || 'Database health check failed'
+      });
+      return { ok: false, status: 'error', error: err?.message };
+    }
+  },
+
+  async flushPendingQueue(): Promise<boolean> {
+    return flushPendingQueue();
+  },
+
+  getPendingQueueSize(): number {
+    return getPendingQueue().length;
+  },
+
+  // Sync with Server across devices with Retry Logic
+  async syncWithServer(options?: { maxRetries?: number }): Promise<boolean> {
+    const maxRetries = options?.maxRetries ?? MAX_RETRY_ATTEMPTS;
+    try {
+      updateDbStatus({ state: 'connecting', lastError: null });
+
+      // 1. Flush any pending offline/intermittent writes first
+      await flushPendingQueue();
+
+      // 2. Fetch latest state from server / MongoDB Atlas with retry logic
+      const res = await fetchWithRetry('/api/data', { method: 'GET' }, maxRetries);
       if (res.ok) {
         const serverData = await res.json();
         if (serverData && typeof serverData === 'object') {
@@ -103,9 +362,24 @@ export const StorageService = {
             window.dispatchEvent(new Event('cafthen_storage_updated'));
           }
         }
+
+        updateDbStatus({
+          state: 'connected',
+          lastSyncedAt: new Date().toLocaleTimeString('id-ID') + ' WIB',
+          lastError: null,
+          retryCount: 0
+        });
+        return true;
+      } else {
+        throw new Error(`HTTP Error ${res.status}: ${res.statusText}`);
       }
-    } catch (e) {
-      // Server sync optional - gracefully fallback to local storage
+    } catch (e: any) {
+      console.warn('[MongoDB Atlas Sync Error] Fallback to local storage:', e?.message || e);
+      updateDbStatus({
+        state: 'error',
+        lastError: e?.message || 'Koneksi ke MongoDB Atlas terputus (menggunakan penyimpanan lokal cadangan)'
+      });
+      return false;
     }
   },
   // Exchange Rate
