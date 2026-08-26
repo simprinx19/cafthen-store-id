@@ -17,61 +17,73 @@ if (!fs.existsSync(DATA_FILE)) {
 }
 
 // MongoDB Atlas Configuration
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://Vercel-Admin-db_compro:A4UTfZd22cX8a9l7@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority";
+let MONGODB_URI = "mongodb+srv://Vercel-Admin-db_compro:A4UTfZd22cX8a9l7@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority";
+if (process.env.MONGODB_URI && !process.env.MONGODB_URI.includes("atlas-lime-horizon")) {
+  MONGODB_URI = process.env.MONGODB_URI;
+}
 const DB_NAME = "db-compro";
 const COLLECTION_NAME = "app_storage";
 
 let cachedDb: Db | null = null;
 let mongoClient: MongoClient | null = null;
-let mongoFailed = false;
 
 async function migrateLocalDataToMongoDB(db: Db) {
   try {
     const collection = db.collection(COLLECTION_NAME);
-    const count = await collection.countDocuments();
-    if (count === 0 && fs.existsSync(DATA_FILE)) {
+    if (fs.existsSync(DATA_FILE)) {
       const raw = fs.readFileSync(DATA_FILE, 'utf-8');
       const data = JSON.parse(raw || '{}');
       const entries = Object.entries(data);
       if (entries.length > 0) {
-        console.log(`Migrating ${entries.length} keys from local data.json to MongoDB database "${DB_NAME}"`);
-        const bulkOps = entries.map(([k, v]) => ({
-          updateOne: {
-            filter: { key: k },
-            update: { $set: { key: k, value: v, updatedAt: new Date() } },
-            upsert: true
+        console.log(`[MongoDB] Checking progressive migration for ${entries.length} keys to MongoDB database "${DB_NAME}"...`);
+        let migratedCount = 0;
+        for (const [key, value] of entries) {
+          const exists = await collection.findOne({ key });
+          if (!exists) {
+            await collection.updateOne(
+              { key },
+              { $set: { key, value, updatedAt: new Date() } },
+              { upsert: true }
+            );
+            migratedCount++;
           }
-        }));
-        await collection.bulkWrite(bulkOps);
-        console.log("Migration to MongoDB completed successfully!");
+        }
+        if (migratedCount > 0) {
+          console.log(`[MongoDB] Migrated ${migratedCount} missing keys from local data.json to MongoDB successfully!`);
+        } else {
+          console.log("[MongoDB] All keys are already fully up to date in MongoDB database.");
+        }
       }
     }
   } catch (error) {
-    console.error("Failed to migrate local data to MongoDB:", error);
+    console.error("[MongoDB] Failed to migrate local data to MongoDB:", error);
   }
 }
 
 async function getMongoDB(): Promise<Db | null> {
   if (cachedDb) return cachedDb;
-  if (mongoFailed) return null;
   if (!MONGODB_URI || (!MONGODB_URI.startsWith("mongodb://") && !MONGODB_URI.startsWith("mongodb+srv://"))) {
-    return null; // Not configured or placeholder/invalid URI yet
+    console.warn("[MongoDB] MONGODB_URI is not configured or is invalid.");
+    return null;
   }
   try {
     if (!mongoClient) {
+      console.log(`[MongoDB] Initializing connection to MongoDB database: ${DB_NAME}...`);
       mongoClient = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 2000,
+        serverSelectionTimeoutMS: 15000, // 15 seconds timeout
+        connectTimeoutMS: 15000,
       });
       await mongoClient.connect();
-      console.log(`Successfully connected to MongoDB database: ${DB_NAME}`);
+      console.log(`[MongoDB] Successfully connected to MongoDB database: ${DB_NAME}`);
       const db = mongoClient.db(DB_NAME);
       await migrateLocalDataToMongoDB(db);
     }
     cachedDb = mongoClient.db(DB_NAME);
     return cachedDb;
   } catch (err) {
-    mongoFailed = true;
-    console.warn("MongoDB connection unavailable (falling back to local cache):", (err as Error)?.message || err);
+    console.error("[MongoDB] Database connection failed (will retry on next request):", (err as Error)?.message || err);
+    cachedDb = null;
+    mongoClient = null; // Reset client on failure so that subsequent calls can retry
     return null;
   }
 }
@@ -104,28 +116,32 @@ app.get("/api/health", async (req, res) => {
 // Get all stored keys/data
 app.get("/api/data", async (req, res) => {
   try {
+    // 1. Start with local cache baseline (to ensure no missing fields/keys)
+    let result: Record<string, any> = {};
+    if (fs.existsSync(DATA_FILE)) {
+      try {
+        const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+        result = JSON.parse(raw || '{}');
+      } catch (e) {
+        result = {};
+      }
+    }
+
+    // 2. Fetch all keys from MongoDB and merge them on top of the baseline
     const db = await getMongoDB();
     if (db) {
       const collection = db.collection(COLLECTION_NAME);
       const docs = await collection.find({}).toArray();
       if (docs && docs.length > 0) {
-        const result: Record<string, any> = {};
         docs.forEach(doc => {
           if (doc.key) {
             result[doc.key] = doc.value;
           }
         });
-        return res.json(result);
       }
     }
 
-    // Fallback to local data.json
-    if (fs.existsSync(DATA_FILE)) {
-      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-      const data = JSON.parse(raw || '{}');
-      return res.json(data);
-    }
-    res.json({});
+    res.json(result);
   } catch (err) {
     console.error("Error reading data:", err);
     try {
