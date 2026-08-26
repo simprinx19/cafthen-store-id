@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AreaChart, 
   Area, 
@@ -23,10 +23,14 @@ import {
   Truck, 
   Ship, 
   ShieldCheck, 
-  CheckCircle2 
+  CheckCircle2,
+  Database,
+  RefreshCw,
+  Server
 } from 'lucide-react';
 import { Order, UserProfile, Product, ExpenseRecord } from '../../types';
 import { formatIDR, formatUSD } from '../../utils/formatters';
+import { StorageService, DbConnectionInfo } from '../../storage';
 
 interface AdminOverviewProps {
   orders: Order[];
@@ -41,6 +45,27 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
   products,
   expenses
 }) => {
+  const [dbStatus, setDbStatus] = useState<DbConnectionInfo>(StorageService.getDbConnectionStatus());
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [syncFeedback, setSyncFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleDbStatus = (e: any) => {
+      if (e.detail) setDbStatus(e.detail);
+    };
+    window.addEventListener('cafthen_db_status_changed', handleDbStatus);
+    return () => window.removeEventListener('cafthen_db_status_changed', handleDbStatus);
+  }, []);
+
+  const handleManualSync = async () => {
+    setIsSyncing(true);
+    setSyncFeedback('Menghubungkan ke MongoDB Atlas...');
+    const result = await StorageService.forceSyncNow();
+    setIsSyncing(false);
+    setSyncFeedback(result.message);
+    setTimeout(() => setSyncFeedback(null), 4000);
+  };
+
   const totalRevenue = orders
     .filter((o) => o.status !== 'Dibatalkan')
     .reduce((sum, o) => sum + o.totalPriceIDR, 0);
@@ -77,6 +102,50 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
 
   return (
     <div className="space-y-6">
+      {/* Realtime Database & Cloud Storage Banner */}
+      <div className="p-4 sm:p-5 bg-gradient-to-r from-slate-900 to-indigo-950 text-white rounded-2xl border border-slate-800 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 rounded-xl shrink-0">
+            <Database className="w-5 h-5" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm sm:text-base font-bold text-white">
+                Basis Data: MongoDB Atlas (Cloud Cluster db-compro)
+              </h3>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" />
+                Aktif & Tersinkronisasi
+              </span>
+            </div>
+            <p className="text-xs text-slate-300 mt-0.5">
+              Sinkronisasi otomatis lintas perangkat aktif. Terakhir disinkronkan:{' '}
+              <span className="text-amber-300 font-mono font-bold">
+                {dbStatus.lastSyncedAt || 'Realtime (Baru saja)'}
+              </span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={handleManualSync}
+            disabled={isSyncing}
+            className="w-full sm:w-auto px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer disabled:opacity-50"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+            <span>{isSyncing ? 'Menyinkronkan...' : 'Sinkronkan Sekarang'}</span>
+          </button>
+        </div>
+      </div>
+
+      {syncFeedback && (
+        <div className="p-3 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-2xl text-xs font-bold flex items-center gap-2 shadow-xs animate-fadeIn">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+          <span>{syncFeedback}</span>
+        </div>
+      )}
+
       {/* 4 Key Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-2">

@@ -226,14 +226,16 @@ export const AdminProductManagement: React.FC<AdminProductManagementProps> = ({
       createdAt: editingProduct ? editingProduct.createdAt : new Date().toISOString()
     };
 
-    StorageService.saveProduct(newProduct);
+    StorageService.saveProduct(newProduct).then(() => {
+      onDataUpdated();
+    });
     setIsModalOpen(false);
     onDataUpdated();
   };
 
-  const handleDeleteProduct = (id: string) => {
+  const handleDeleteProduct = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus produk ini dari katalog?')) {
-      StorageService.deleteProduct(id);
+      await StorageService.deleteProduct(id);
       onDataUpdated();
     }
   };

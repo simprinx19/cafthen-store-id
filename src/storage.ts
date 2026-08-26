@@ -115,6 +115,11 @@ function savePendingQueue(queue: PendingWriteItem[]): void {
   }
 }
 
+function isKeyPendingInQueue(key: string): boolean {
+  const queue = getPendingQueue();
+  return queue.some(item => item.key === key);
+}
+
 function enqueuePendingWrite(key: string, value: any): void {
   const queue = getPendingQueue();
   const existingIdx = queue.findIndex(item => item.key === key);
@@ -134,6 +139,32 @@ function enqueuePendingWrite(key: string, value: any): void {
 
   savePendingQueue(queue);
   updateDbStatus({ pendingQueueSize: queue.length });
+}
+
+const LOCAL_UPDATES_KEY = 'cafthen_local_update_timestamps';
+function getLocalUpdateTimestamps(): Record<string, number> {
+  try {
+    const raw = localStorage.getItem(LOCAL_UPDATES_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
+function recordLocalUpdate(key: string): void {
+  try {
+    const map = getLocalUpdateTimestamps();
+    map[key] = Date.now();
+    localStorage.setItem(LOCAL_UPDATES_KEY, JSON.stringify(map));
+  } catch {}
+}
+
+function clearLocalUpdate(key: string): void {
+  try {
+    const map = getLocalUpdateTimestamps();
+    delete map[key];
+    localStorage.setItem(LOCAL_UPDATES_KEY, JSON.stringify(map));
+  } catch {}
 }
 
 function updateDbStatus(partial: Partial<DbConnectionInfo>) {
@@ -260,6 +291,7 @@ async function flushPendingQueue(): Promise<boolean> {
 
         if (res.ok) {
           successfulIds.push(item.id);
+          clearLocalUpdate(item.key);
         }
       } catch (err: any) {
         console.warn(`[MongoDB Atlas Sync] Failed to flush queued write for key "${item.key}":`, err?.message);
@@ -303,21 +335,57 @@ function getStored<T>(key: string, fallback: T): T {
   }
 }
 
-function setStored<T>(key: string, value: T): void {
+// Direct atomic write to both LocalStorage and MongoDB Atlas
+async function saveDirectToServer(key: string, value: any): Promise<boolean> {
+  // 1. Save to localStorage immediately and trigger reactive DOM updates
   try {
     localStorage.setItem(key, JSON.stringify(value));
+    recordLocalUpdate(key);
     window.dispatchEvent(new Event('cafthen_storage_updated'));
-
-    // Enqueue write to ensure cross-device persistence on MongoDB Atlas
-    enqueuePendingWrite(key, value);
-
-    // Attempt non-blocking flush with retry
-    flushPendingQueue().catch((err) => {
-      console.warn('[MongoDB Atlas] Write queued for background retry:', err?.message);
-    });
+    if (key === KEYS.THEME_SETTINGS) {
+      window.dispatchEvent(new CustomEvent('cafthen_theme_updated', { detail: value }));
+    }
   } catch (e) {
-    console.error(`Error saving ${key} to storage:`, e);
+    console.error(`Error saving ${key} to local storage:`, e);
   }
+
+  // 2. Direct asynchronous write to MongoDB Atlas via serverless /api/data
+  try {
+    updateDbStatus({ state: 'connecting', lastError: null });
+    const res = await fetchWithRetry(
+      '/api/data',
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      },
+      3
+    );
+
+    if (res.ok) {
+      clearLocalUpdate(key);
+      const queue = getPendingQueue().filter(item => item.key !== key);
+      savePendingQueue(queue);
+
+      updateDbStatus({
+        state: 'connected',
+        lastSyncedAt: new Date().toLocaleTimeString('id-ID') + ' WIB',
+        lastError: null,
+        retryCount: 0
+      });
+      return true;
+    } else {
+      throw new Error(`HTTP Error ${res.status}`);
+    }
+  } catch (err: any) {
+    console.warn(`[MongoDB Atlas] Direct save failed (${err?.message}). Queued for background sync.`);
+    enqueuePendingWrite(key, value);
+    return false;
+  }
+}
+
+function setStored<T>(key: string, value: T): Promise<boolean> {
+  return saveDirectToServer(key, value);
 }
 
 export const StorageService = {
@@ -380,8 +448,12 @@ export const StorageService = {
         if (serverData && typeof serverData === 'object') {
           let updated = false;
           for (const [key, val] of Object.entries(serverData)) {
-            // Exclude device-specific session credentials from global sync
-            if (key === KEYS.ADMIN_LOGGED_IN || key === KEYS.CURRENT_USER) {
+            // Exclude device-specific session credentials and metadata from global sync
+            if (key === KEYS.ADMIN_LOGGED_IN || key === KEYS.CURRENT_USER || key === '_timestamps') {
+              continue;
+            }
+            // If the key is pending in the write queue, do NOT overwrite with older server data
+            if (isKeyPendingInQueue(key)) {
               continue;
             }
             if (val !== undefined) {
@@ -413,12 +485,27 @@ export const StorageService = {
       }
     } catch (e: any) {
       updateDbStatus({
-        state: 'connected', // Keep state calm unless disconnected completely
+        state: 'connected',
         lastError: null
       });
       return false;
     } finally {
       isSyncingWithServer = false;
+    }
+  },
+
+  // Manual trigger for instant full sync
+  async forceSyncNow(): Promise<{ ok: boolean; message: string }> {
+    try {
+      updateDbStatus({ state: 'connecting', lastError: null });
+      await flushPendingQueue();
+      const ok = await this.syncWithServer({ maxRetries: 3 });
+      if (ok) {
+        return { ok: true, message: 'Data berhasil disinkronkan secara realtime dengan MongoDB Atlas!' };
+      }
+      return { ok: false, message: 'Sinkronisasi selesai dengan cache lokal.' };
+    } catch (e: any) {
+      return { ok: false, message: e?.message || 'Error saat sinkronisasi' };
     }
   },
   // Exchange Rate
@@ -448,15 +535,15 @@ export const StorageService = {
   getCompanyProfile(): CompanyProfileData {
     return getStored<CompanyProfileData>(KEYS.COMPANY_PROFILE, INITIAL_COMPANY_PROFILE);
   },
-  saveCompanyProfile(profile: CompanyProfileData): void {
-    setStored(KEYS.COMPANY_PROFILE, profile);
+  saveCompanyProfile(profile: CompanyProfileData): Promise<boolean> {
+    return setStored(KEYS.COMPANY_PROFILE, profile);
   },
 
   // Products
   getProducts(): Product[] {
     return getStored<Product[]>(KEYS.PRODUCTS, INITIAL_PRODUCTS);
   },
-  saveProduct(product: Product): void {
+  saveProduct(product: Product): Promise<boolean> {
     const products = this.getProducts();
     const index = products.findIndex((p) => p.id === product.id);
     if (index >= 0) {
@@ -464,11 +551,11 @@ export const StorageService = {
     } else {
       products.unshift(product);
     }
-    setStored(KEYS.PRODUCTS, products);
+    return setStored(KEYS.PRODUCTS, products);
   },
-  deleteProduct(productId: string): void {
+  deleteProduct(productId: string): Promise<boolean> {
     const products = this.getProducts().filter((p) => p.id !== productId);
-    setStored(KEYS.PRODUCTS, products);
+    return setStored(KEYS.PRODUCTS, products);
   },
 
   // Team
@@ -478,7 +565,7 @@ export const StorageService = {
   getTeamMembers(): TeamMember[] {
     return this.getTeam();
   },
-  saveTeamMember(member: TeamMember): void {
+  saveTeamMember(member: TeamMember): Promise<boolean> {
     const team = this.getTeam();
     const index = team.findIndex((t) => t.id === member.id);
     if (index >= 0) {
@@ -486,18 +573,18 @@ export const StorageService = {
     } else {
       team.push(member);
     }
-    setStored(KEYS.TEAM_MEMBERS, team);
+    return setStored(KEYS.TEAM_MEMBERS, team);
   },
-  deleteTeamMember(id: string): void {
+  deleteTeamMember(id: string): Promise<boolean> {
     const team = this.getTeam().filter((t) => t.id !== id);
-    setStored(KEYS.TEAM_MEMBERS, team);
+    return setStored(KEYS.TEAM_MEMBERS, team);
   },
 
   // Activities
   getActivities(): ActivityPhoto[] {
     return getStored<ActivityPhoto[]>(KEYS.ACTIVITIES, INITIAL_ACTIVITY_PHOTOS);
   },
-  saveActivity(activity: ActivityPhoto): void {
+  saveActivity(activity: ActivityPhoto): Promise<boolean> {
     const acts = this.getActivities();
     const index = acts.findIndex((a) => a.id === activity.id);
     if (index >= 0) {
@@ -505,18 +592,18 @@ export const StorageService = {
     } else {
       acts.unshift(activity);
     }
-    setStored(KEYS.ACTIVITIES, acts);
+    return setStored(KEYS.ACTIVITIES, acts);
   },
-  deleteActivity(id: string): void {
+  deleteActivity(id: string): Promise<boolean> {
     const acts = this.getActivities().filter((a) => a.id !== id);
-    setStored(KEYS.ACTIVITIES, acts);
+    return setStored(KEYS.ACTIVITIES, acts);
   },
 
   // Users
   getUsers(): UserProfile[] {
     return getStored<UserProfile[]>(KEYS.USERS, INITIAL_USERS);
   },
-  saveUser(user: UserProfile): void {
+  saveUser(user: UserProfile): Promise<boolean> {
     const users = this.getUsers();
     const index = users.findIndex((u) => u.id === user.id);
     if (index >= 0) {
@@ -524,20 +611,22 @@ export const StorageService = {
     } else {
       users.unshift(user);
     }
-    setStored(KEYS.USERS, users);
+    const res = setStored(KEYS.USERS, users);
 
     const current = this.getCurrentUser();
     if (current && current.id === user.id) {
       setStored(KEYS.CURRENT_USER, user);
     }
+    return res;
   },
-  updateUserStatus(userId: string, status: 'Pending' | 'Verified' | 'Rejected'): void {
+  updateUserStatus(userId: string, status: 'Pending' | 'Verified' | 'Rejected'): Promise<boolean> {
     const users = this.getUsers();
     const user = users.find((u) => u.id === userId);
     if (user) {
       user.status = status;
-      this.saveUser(user);
+      return this.saveUser(user);
     }
+    return Promise.resolve(false);
   },
   registerNewUser(data: {
     username: string;
@@ -602,8 +691,8 @@ export const StorageService = {
   getPaymentSettings(): PaymentSettingsState {
     return getStored<PaymentSettingsState>(KEYS.PAYMENT_SETTINGS, INITIAL_PAYMENT_SETTINGS);
   },
-  savePaymentSettings(settings: PaymentSettingsState): void {
-    setStored(KEYS.PAYMENT_SETTINGS, settings);
+  savePaymentSettings(settings: PaymentSettingsState): Promise<boolean> {
+    const res = setStored(KEYS.PAYMENT_SETTINGS, settings);
     
     // Also keep company bank accounts in sync if needed
     const company = this.getCompanyProfile();
@@ -618,24 +707,25 @@ export const StorageService = {
       }
       this.saveCompanyProfile(company);
     }
+    return res;
   },
   getBankAccounts(): BankAccount[] {
     const settings = this.getPaymentSettings();
     return settings.bankAccounts || INITIAL_PAYMENT_SETTINGS.bankAccounts;
   },
-  saveBankAccounts(accounts: BankAccount[]): void {
+  saveBankAccounts(accounts: BankAccount[]): Promise<boolean> {
     const settings = this.getPaymentSettings();
     settings.bankAccounts = accounts;
-    this.savePaymentSettings(settings);
+    return this.savePaymentSettings(settings);
   },
   getQRISConfig() {
     const settings = this.getPaymentSettings();
     return settings.qrisConfig || INITIAL_PAYMENT_SETTINGS.qrisConfig;
   },
-  saveQRISConfig(config: PaymentSettingsState['qrisConfig']): void {
+  saveQRISConfig(config: PaymentSettingsState['qrisConfig']): Promise<boolean> {
     const settings = this.getPaymentSettings();
     settings.qrisConfig = config;
-    this.savePaymentSettings(settings);
+    return this.savePaymentSettings(settings);
   },
   resetPaymentSettingsToDefault(): PaymentSettingsState {
     setStored(KEYS.PAYMENT_SETTINGS, INITIAL_PAYMENT_SETTINGS);
@@ -646,7 +736,7 @@ export const StorageService = {
   getOrders(): Order[] {
     return getStored<Order[]>(KEYS.ORDERS, INITIAL_ORDERS);
   },
-  saveOrder(order: Order): void {
+  saveOrder(order: Order): Promise<boolean> {
     const orders = this.getOrders();
     const index = orders.findIndex((o) => o.id === order.id);
     if (index >= 0) {
@@ -654,7 +744,7 @@ export const StorageService = {
     } else {
       orders.unshift(order);
     }
-    setStored(KEYS.ORDERS, orders);
+    return setStored(KEYS.ORDERS, orders);
   },
   createOrder(params: {
     buyer: UserProfile;
@@ -849,7 +939,7 @@ export const StorageService = {
 
     return newOrder;
   },
-  updateOrderStatus(orderId: string, status: OrderStatus, trackingNumber?: string, currentLocation?: string): void {
+  updateOrderStatus(orderId: string, status: OrderStatus, trackingNumber?: string, currentLocation?: string): Promise<boolean> {
     const orders = this.getOrders();
     const order = orders.find((o) => o.id === orderId);
     if (order) {
@@ -857,15 +947,16 @@ export const StorageService = {
       if (trackingNumber) order.trackingNumber = trackingNumber;
       if (currentLocation) order.currentLocation = currentLocation;
       order.updatedAt = new Date().toLocaleString('id-ID') + ' WIB';
-      this.saveOrder(order);
+      return this.saveOrder(order);
     }
+    return Promise.resolve(false);
   },
 
   // Expenses & Finance
   getExpenses(): ExpenseRecord[] {
     return getStored<ExpenseRecord[]>(KEYS.EXPENSES, INITIAL_EXPENSES);
   },
-  saveExpense(expense: ExpenseRecord): void {
+  saveExpense(expense: ExpenseRecord): Promise<boolean> {
     const expenses = this.getExpenses();
     const index = expenses.findIndex((e) => e.id === expense.id);
     if (index >= 0) {
@@ -873,7 +964,7 @@ export const StorageService = {
     } else {
       expenses.unshift(expense);
     }
-    setStored(KEYS.EXPENSES, expenses);
+    return setStored(KEYS.EXPENSES, expenses);
   },
   addExpense(expense: Omit<ExpenseRecord, 'id'>): ExpenseRecord {
     const expenses = this.getExpenses();
@@ -885,9 +976,9 @@ export const StorageService = {
     setStored(KEYS.EXPENSES, expenses);
     return newExpense;
   },
-  deleteExpense(id: string): void {
+  deleteExpense(id: string): Promise<boolean> {
     const expenses = this.getExpenses().filter((e) => e.id !== id);
-    setStored(KEYS.EXPENSES, expenses);
+    return setStored(KEYS.EXPENSES, expenses);
   },
   getFinancials(): FinancialReport {
     return this.getFinanceSummary();
@@ -925,10 +1016,10 @@ export const StorageService = {
   getMessages(): ChatMessage[] {
     return getStored<ChatMessage[]>(KEYS.MESSAGES, INITIAL_MESSAGES);
   },
-  saveMessage(msg: ChatMessage): void {
+  saveMessage(msg: ChatMessage): Promise<boolean> {
     const messages = this.getMessages();
     messages.push(msg);
-    setStored(KEYS.MESSAGES, messages);
+    return setStored(KEYS.MESSAGES, messages);
   },
   sendMessage(msg: Omit<ChatMessage, 'id' | 'timestamp'>): ChatMessage {
     const messages = this.getMessages();
@@ -975,12 +1066,13 @@ export const StorageService = {
     const stored = getStored<ThemeSettings>(KEYS.THEME_SETTINGS, INITIAL_THEME_SETTINGS);
     return stored || INITIAL_THEME_SETTINGS;
   },
-  saveThemeSettings(theme: ThemeSettings): void {
+  saveThemeSettings(theme: ThemeSettings): Promise<boolean> {
     theme.updatedAt = new Date().toISOString();
-    setStored(KEYS.THEME_SETTINGS, theme);
+    const res = setStored(KEYS.THEME_SETTINGS, theme);
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('cafthen_theme_updated', { detail: theme }));
     }
+    return res;
   },
   resetThemeSettings(): ThemeSettings {
     const defaultTheme = { ...INITIAL_THEME_SETTINGS, updatedAt: new Date().toISOString() };
