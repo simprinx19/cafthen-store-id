@@ -239,7 +239,7 @@ app.post("/api/db-test", async (req: express.Request, res: express.Response) => 
 // Get all stored keys/data
 const handleGetData = async (req: express.Request, res: express.Response) => {
   try {
-    let result: Record<string, any> = {};
+    let result: Record<string, any> = { ...safeReadLocalCache() };
 
     // 1. Fetch all keys from MongoDB Atlas
     const db = await getMongoDB();
@@ -253,9 +253,6 @@ const handleGetData = async (req: express.Request, res: express.Response) => {
           }
         });
       }
-    } else {
-      // Fallback to local/in-memory cache only if MongoDB is offline
-      result = safeReadLocalCache();
     }
 
     // 2. Ensure all expected application keys are present by filling in any missing keys with defaults

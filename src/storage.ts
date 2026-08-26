@@ -447,6 +447,9 @@ export const StorageService = {
         const serverData = await res.json();
         if (serverData && typeof serverData === 'object') {
           let updated = false;
+          const localUpdates = getLocalUpdateTimestamps();
+          const now = Date.now();
+
           for (const [key, val] of Object.entries(serverData)) {
             // Exclude device-specific session credentials and metadata from global sync
             if (key === KEYS.ADMIN_LOGGED_IN || key === KEYS.CURRENT_USER || key === '_timestamps') {
@@ -456,12 +459,27 @@ export const StorageService = {
             if (isKeyPendingInQueue(key)) {
               continue;
             }
+
+            // Protect recent local edits (within 60s) from being overwritten by stale GET responses
+            const lastLocalEdit = localUpdates[key] || 0;
+            const isRecentlyEditedLocally = (now - lastLocalEdit) < 60000;
+
             if (val !== undefined) {
               const localVal = localStorage.getItem(key);
               const serverStr = JSON.stringify(val);
+
               if (localVal !== serverStr) {
+                if (isRecentlyEditedLocally) {
+                  // User modified this key locally less than 60s ago - keep local version!
+                  continue;
+                }
                 localStorage.setItem(key, serverStr);
                 updated = true;
+              } else {
+                // Local value matches server data - clear edit protection timestamp
+                if (localUpdates[key]) {
+                  clearLocalUpdate(key);
+                }
               }
             }
           }
