@@ -1067,5 +1067,9 @@
     "enableGlowEffects": true,
     "updatedAt": "2026-08-26T12:39:39.793Z"
   },
-  "cafthen_exchange_rate": 17715
+  "cafthen_exchange_rate": 17715,
+  "_diag_test_verification": {
+    "verifiedAt": "2026-08-26T15:35:55.595Z",
+    "status": "DIAGNOSTIC_UTILITY_ACTIVE"
+  }
 }

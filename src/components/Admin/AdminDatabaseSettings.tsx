@@ -20,6 +20,7 @@ import {
   Check
 } from 'lucide-react';
 import { StorageService, DbConnectionInfo } from '../../storage';
+import { MongoDiagnosticConsole } from './MongoDiagnosticConsole';
 
 interface AdminDatabaseSettingsProps {
   onDataUpdated: () => void;
@@ -487,6 +488,9 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
           </div>
         </div>
       </div>
+
+      {/* MongoDB Atlas Read/Write Diagnostic Console */}
+      <MongoDiagnosticConsole onDataUpdated={onDataUpdated} />
     </div>
   );
 };
