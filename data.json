@@ -1,6 +1,4 @@
 {
-  "cafthen_exchange_rate": 17715,
-  "cafthen_admin_logged_in": true,
   "cafthen_company_profile": {
     "companyName": "PT. CAFTHEN INDO PROJECT",
     "storeName": "CAFTHEN STORE ID",
@@ -1072,6 +1070,7 @@
     "borderRadius": "rounded-2xl",
     "fontFamily": "sans",
     "enableGlowEffects": true,
-    "updatedAt": "2026-08-26T11:10:15.670Z"
-  }
+    "updatedAt": "2026-08-26T12:39:39.793Z"
+  },
+  "cafthen_exchange_rate": 17715
 }

@@ -102,55 +102,72 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const [misi, setMisi] = useState<string[]>(initialCompany.misi);
   const [newMisiText, setNewMisiText] = useState('');
 
-  // Keep form states synchronized if initialCompany is updated from outside/storage
+  // Dirty state tracking to avoid background intervals wiping out user input
+  const [isDirty, setIsDirty] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Helper to load company data into local form states
+  const populateFormFromCompany = (comp: CompanyProfileData) => {
+    setLogoUrl(comp.logoUrl || DEFAULT_CIP_LOGO);
+    setCompanyName(comp.companyName || '');
+    setStoreName(comp.storeName || '');
+    setAddress(comp.address || '');
+    setEmail(comp.email || '');
+    setPhone(comp.phone || '');
+    setOwner(comp.owner || '');
+    setDirector(comp.director || '');
+    setMapsUrl(comp.mapsUrl || '');
+
+    setNib(comp.nib || '0220202931234');
+    setAhukemenkumham(comp.ahukemenkumham || 'AHU-0012345.AH.01.01.TAHUN 2024');
+    setNpwp(comp.npwp || '41.890.123.4-331.000');
+    setAktaNotaris(comp.aktaNotaris || 'Akta Notaris No. 12 Tanggal 15 Agustus 2024 (Notaris Hj. Faridah, SH., M.Kn)');
+    setIzinUsaha(comp.izinUsaha || 'Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI');
+    setSertifikasi(comp.sertifikasi || 'ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)');
+    setPostalCode(comp.postalCode || '36361');
+    setOperationalHours(comp.operationalHours || 'Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)');
+    setTagline(comp.tagline || 'Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya');
+
+    setHeroBadge(comp.heroBadge || 'Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil');
+    setHeroTitle(comp.heroTitle || 'Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil');
+    setHeroSubtitle(comp.heroSubtitle || 'Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).');
+    setHeroCtaButton1(comp.heroCtaButton1 || 'Buka Katalog Komoditas & Material');
+    setHeroCtaButton2(comp.heroCtaButton2 || 'Konsultasi & Penawaran Resmi');
+    setTaxSystemLabel(comp.taxSystemLabel || 'ECoretax DJP Integrated');
+
+    setProfileSectionBadge(comp.profileSectionBadge || 'PROFIL & KEGIATAN PERUSAHAAN');
+    setProfileSectionTitle(comp.profileSectionTitle || 'Dedikasi, Integritas & Rantai Pasok Skala Nasional');
+    setProfileSectionDescription(comp.profileSectionDescription || 'PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi, berfokus pada integrasi sektor perdagangan komoditas sumber daya, pengadaan barang & jasa, serta rekayasa konstruksi sipil.');
+
+    setTradingTitle(comp.tradingTitle || 'Perdagangan Komoditas (General Trading)');
+    setTradingDesc(comp.tradingDesc || 'Penyedia pasokan batubara kalori GAR 4200 - 5000 kcal/kg, agregat batu split, pasir silika, dan komoditas industri dengan jaminan legalitas IUP resmi dan sertifikasi surveyor independen (Sucofindo / Carsurin).');
+
+    setProcurementTitle(comp.procurementTitle || 'Pengadaan Barang & Jasa (Procurement)');
+    setProcurementDesc(comp.procurementDesc || 'Pengadaan material besi beton SNI 2052:2017 berbagai diameter, semen curah Portland Composite Cement (PCC), sewa armada alat berat (Excavator PC200/Bulldozer), dan perlengkapan logistik proyek.');
+
+    setConstructionTitle(comp.constructionTitle || 'Konstruksi Bangunan Sipil & Infrastruktur');
+    setConstructionDesc(comp.constructionDesc || 'Pelaksanaan pekerjaan konstruksi bangunan gedung, pergudangan baja struktural, jalan rigid pavement beton, jembatan, penataan lahan (land clearing), dan saluran drainase terpadu.');
+
+    setFooterAbout(comp.footerAbout || 'Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.');
+
+    setYoutubeVideoUrl(comp.youtubeVideoUrl || '');
+    setYoutubeVideoTitle(comp.youtubeVideoTitle || '');
+    setVisi(comp.visi || '');
+    setMisi(comp.misi || []);
+  };
+
+  // Only update from initialCompany if the user is not actively editing (isDirty === false)
   useEffect(() => {
-    setLogoUrl(initialCompany.logoUrl || DEFAULT_CIP_LOGO);
-    setCompanyName(initialCompany.companyName);
-    setStoreName(initialCompany.storeName);
-    setAddress(initialCompany.address);
-    setEmail(initialCompany.email);
-    setPhone(initialCompany.phone);
-    setOwner(initialCompany.owner);
-    setDirector(initialCompany.director);
-    setMapsUrl(initialCompany.mapsUrl);
+    if (!isDirty) {
+      populateFormFromCompany(initialCompany);
+    }
+  }, [initialCompany, isDirty]);
 
-    setNib(initialCompany.nib || '0220202931234');
-    setAhukemenkumham(initialCompany.ahukemenkumham || 'AHU-0012345.AH.01.01.TAHUN 2024');
-    setNpwp(initialCompany.npwp || '41.890.123.4-331.000');
-    setAktaNotaris(initialCompany.aktaNotaris || 'Akta Notaris No. 12 Tanggal 15 Agustus 2024 (Notaris Hj. Faridah, SH., M.Kn)');
-    setIzinUsaha(initialCompany.izinUsaha || 'Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI');
-    setSertifikasi(initialCompany.sertifikasi || 'ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)');
-    setPostalCode(initialCompany.postalCode || '36361');
-    setOperationalHours(initialCompany.operationalHours || 'Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)');
-    setTagline(initialCompany.tagline || 'Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya');
-
-    setHeroBadge(initialCompany.heroBadge || 'Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil');
-    setHeroTitle(initialCompany.heroTitle || 'Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil');
-    setHeroSubtitle(initialCompany.heroSubtitle || 'Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).');
-    setHeroCtaButton1(initialCompany.heroCtaButton1 || 'Buka Katalog Komoditas & Material');
-    setHeroCtaButton2(initialCompany.heroCtaButton2 || 'Konsultasi & Penawaran Resmi');
-    setTaxSystemLabel(initialCompany.taxSystemLabel || 'ECoretax DJP Integrated');
-
-    setProfileSectionBadge(initialCompany.profileSectionBadge || 'PROFIL & KEGIATAN PERUSAHAAN');
-    setProfileSectionTitle(initialCompany.profileSectionTitle || 'Dedikasi, Integritas & Rantai Pasok Skala Nasional');
-    setProfileSectionDescription(initialCompany.profileSectionDescription || 'PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi, berfokus pada integrasi sektor perdagangan komoditas sumber daya, pengadaan barang & jasa, serta rekayasa konstruksi sipil.');
-
-    setTradingTitle(initialCompany.tradingTitle || 'Perdagangan Komoditas (General Trading)');
-    setTradingDesc(initialCompany.tradingDesc || 'Penyedia pasokan batubara kalori GAR 4200 - 5000 kcal/kg, agregat batu split, pasir silika, dan komoditas industri dengan jaminan legalitas IUP resmi dan sertifikasi surveyor independen (Sucofindo / Carsurin).');
-
-    setProcurementTitle(initialCompany.procurementTitle || 'Pengadaan Barang & Jasa (Procurement)');
-    setProcurementDesc(initialCompany.procurementDesc || 'Pengadaan material besi beton SNI 2052:2017 berbagai diameter, semen curah Portland Composite Cement (PCC), sewa armada alat berat (Excavator PC200/Bulldozer), dan perlengkapan logistik proyek.');
-
-    setConstructionTitle(initialCompany.constructionTitle || 'Konstruksi Bangunan Sipil & Infrastruktur');
-    setConstructionDesc(initialCompany.constructionDesc || 'Pelaksanaan pekerjaan konstruksi bangunan gedung, pergudangan baja struktural, jalan rigid pavement beton, jembatan, penataan lahan (land clearing), dan saluran drainase terpadu.');
-
-    setFooterAbout(initialCompany.footerAbout || 'Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.');
-
-    setYoutubeVideoUrl(initialCompany.youtubeVideoUrl);
-    setYoutubeVideoTitle(initialCompany.youtubeVideoTitle);
-    setVisi(initialCompany.visi);
-    setMisi(initialCompany.misi);
-  }, [initialCompany]);
+  const handleResetFormToDatabase = () => {
+    populateFormFromCompany(initialCompany);
+    setIsDirty(false);
+    triggerNotice('Formulir telah disegarkan sesuai data terbaru dari Database MongoDB.');
+  };
 
   // Team & Activities editing modals
   const [isAddingMember, setIsAddingMember] = useState(false);
@@ -242,50 +259,77 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updatedCompany: CompanyProfileData = {
-      ...initialCompany,
-      logoUrl: logoUrl || initialCompany.logoUrl,
-      companyName,
-      storeName,
-      address,
-      email,
-      phone,
-      owner,
-      director,
-      mapsUrl,
-      nib,
-      ahukemenkumham,
-      npwp,
-      aktaNotaris,
-      izinUsaha,
-      sertifikasi,
-      postalCode,
-      operationalHours,
-      tagline,
-      heroBadge,
-      heroTitle,
-      heroSubtitle,
-      heroCtaButton1,
-      heroCtaButton2,
-      taxSystemLabel,
-      profileSectionBadge,
-      profileSectionTitle,
-      profileSectionDescription,
-      tradingTitle,
-      tradingDesc,
-      procurementTitle,
-      procurementDesc,
-      constructionTitle,
-      constructionDesc,
-      footerAbout,
-      youtubeVideoUrl,
-      youtubeVideoTitle,
-      visi,
-      misi
-    };
-    await StorageService.saveCompanyProfile(updatedCompany);
-    triggerNotice('Data Profil, Legalitas & Seluruh Teks Halaman Utama berhasil diperbarui dan tersimpan ke Database!');
-    onDataUpdated();
+    setIsSaving(true);
+    try {
+      const updatedCompany: CompanyProfileData = {
+        ...initialCompany,
+        logoUrl: logoUrl || initialCompany.logoUrl || DEFAULT_CIP_LOGO,
+        companyName: companyName || initialCompany.companyName,
+        storeName: storeName || initialCompany.storeName,
+        address: address || initialCompany.address,
+        email: email || initialCompany.email,
+        phone: phone || initialCompany.phone,
+        owner: owner || initialCompany.owner,
+        director: director || initialCompany.director,
+        mapsUrl: mapsUrl || initialCompany.mapsUrl,
+        nib: nib || initialCompany.nib || '0220202931234',
+        ahukemenkumham: ahukemenkumham || initialCompany.ahukemenkumham || 'AHU-0012345.AH.01.01.TAHUN 2024',
+        npwp: npwp || initialCompany.npwp || '41.890.123.4-331.000',
+        aktaNotaris: aktaNotaris || initialCompany.aktaNotaris || 'Akta Notaris No. 12 Tanggal 15 Agustus 2024 (Notaris Hj. Faridah, SH., M.Kn)',
+        izinUsaha: izinUsaha || initialCompany.izinUsaha || 'Izin Usaha PB-UMKU OSS RBA Kementerian Investasi / BKPM RI',
+        sertifikasi: sertifikasi || initialCompany.sertifikasi || 'ISO 9001:2015, ISO 14001:2015, Sertifikat Standar K3 Konstruksi (SMK3)',
+        postalCode: postalCode || initialCompany.postalCode || '36361',
+        operationalHours: operationalHours || initialCompany.operationalHours || 'Senin - Sabtu: 08:00 - 17:00 WIB (Layanan Emergency/Pelayaran 24 Jam)',
+        tagline: tagline || initialCompany.tagline || 'Solusi Terpadu Komoditas Perdagangan, Pengadaan & Kontraktor Sipil Terpercaya',
+        heroBadge: heroBadge || initialCompany.heroBadge || 'Kegiatan Ekspor • Produksi Arang Batok • Penjualan Kelapa Tua • Cangkang Sawit • Konstruksi Sipil',
+        heroTitle: heroTitle || initialCompany.heroTitle || 'Solusi Terpadu Perdagangan Komoditas, Pengadaan & Konstruksi Sipil',
+        heroSubtitle: heroSubtitle || initialCompany.heroSubtitle || 'Mitra strategis terpercaya di Indonesia dalam pengadaan komoditas batubara curah, besi beton SNI, semen curah, material agregat, serta jasa konstruksi bangunan sipil berstandar nasional didukung digitalisasi kontrak hukum resmi (LOCO, FOB, FRANCO, CIF).',
+        heroCtaButton1: heroCtaButton1 || initialCompany.heroCtaButton1 || 'Buka Katalog Komoditas & Material',
+        heroCtaButton2: heroCtaButton2 || initialCompany.heroCtaButton2 || 'Konsultasi & Penawaran Resmi',
+        taxSystemLabel: taxSystemLabel || initialCompany.taxSystemLabel || 'ECoretax DJP Integrated',
+        profileSectionBadge: profileSectionBadge || initialCompany.profileSectionBadge || 'PROFIL & KEGIATAN PERUSAHAAN',
+        profileSectionTitle: profileSectionTitle || initialCompany.profileSectionTitle || 'Dedikasi, Integritas & Rantai Pasok Skala Nasional',
+        profileSectionDescription: profileSectionDescription || initialCompany.profileSectionDescription || 'PT. CAFTHEN INDO PROJECT adalah badan usaha berbadan hukum yang berkantor pusat di Muaro Jambi, berfokus pada integrasi sektor perdagangan komoditas sumber daya, pengadaan barang & jasa, serta rekayasa konstruksi sipil.',
+        tradingTitle: tradingTitle || initialCompany.tradingTitle || 'Perdagangan Komoditas (General Trading)',
+        tradingDesc: tradingDesc || initialCompany.tradingDesc || 'Penyedia pasokan batubara kalori GAR 4200 - 5000 kcal/kg, agregat batu split, pasir silika, dan komoditas industri dengan jaminan legalitas IUP resmi dan sertifikasi surveyor independen (Sucofindo / Carsurin).',
+        tradingPoints: initialCompany.tradingPoints || [
+          'Skema FOB Tongkang & Mother Vessel',
+          'COA & COW Analisis Kualitas Lengkap'
+        ],
+        procurementTitle: procurementTitle || initialCompany.procurementTitle || 'Pengadaan Barang & Jasa (Procurement)',
+        procurementDesc: procurementDesc || initialCompany.procurementDesc || 'Pengadaan material besi beton SNI 2052:2017 berbagai diameter, semen curah Portland Composite Cement (PCC), sewa armada alat berat (Excavator PC200/Bulldozer), dan perlengkapan logistik proyek.',
+        procurementPoints: initialCompany.procurementPoints || [
+          'Pola Pengiriman Franco sampai di Lokasi Proyek',
+          'Terdaftar Sistem Perpajakan Resmi ECoretax DJP'
+        ],
+        constructionTitle: constructionTitle || initialCompany.constructionTitle || 'Konstruksi Bangunan Sipil & Infrastruktur',
+        constructionDesc: constructionDesc || initialCompany.constructionDesc || 'Pelaksanaan pekerjaan konstruksi bangunan gedung, pergudangan baja struktural, jalan rigid pavement beton, jembatan, penataan lahan (land clearing), dan saluran drainase terpadu.',
+        constructionPoints: initialCompany.constructionPoints || [
+          'Tenaga Ahli Bersertifikat SKA / SKK LPJK PUPR',
+          'Standar K3 & Asuransi Konstruksi Menyeluruh'
+        ],
+        footerAbout: footerAbout || initialCompany.footerAbout || 'Perusahaan perdagangan umum komoditas tambang batubara, pengadaan material konstruksi bersertifikasi SNI, serta penyedia jasa konstruksi bangunan sipil dan jalan terintegrasi dengan Surat Kontrak Hukum Digital di Indonesia.',
+        youtubeVideoUrl: youtubeVideoUrl || initialCompany.youtubeVideoUrl || '',
+        youtubeVideoTitle: youtubeVideoTitle || initialCompany.youtubeVideoTitle || '',
+        visi: visi || initialCompany.visi || '',
+        misi: misi || initialCompany.misi || [],
+        bankAccounts: initialCompany.bankAccounts || [],
+        qrisImageUrl: initialCompany.qrisImageUrl || ''
+      };
+
+      const success = await StorageService.saveCompanyProfile(updatedCompany);
+      setIsDirty(false);
+      triggerNotice(
+        success
+          ? '✓ Data Profil, Legalitas & Seluruh Teks Halaman Utama berhasil diperbarui dan tersimpan permanen ke Database MongoDB (db-compro)!'
+          : '✓ Data tersimpan ke memori lokal dan sedang disinkronkan ke Database MongoDB.'
+      );
+      onDataUpdated();
+    } catch (err: any) {
+      alert(`Gagal menyimpan data ke database: ${err?.message || 'Error tidak diketahui'}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const handleAddTeamMember = (e: React.FormEvent) => {
@@ -772,12 +816,39 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
               ))}
             </div>
 
-            <button
-              type="submit"
-              className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow cursor-pointer ml-auto"
-            >
-              <Save className="w-4 h-4" /> Simpan Seluruh Teks & Legalitas
-            </button>
+            <div className="flex items-center gap-2 ml-auto">
+              {isDirty && (
+                <span className="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-900 text-[11px] font-bold border border-amber-300 animate-pulse">
+                  ⚠️ Ada Editan Belum Disimpan
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={handleResetFormToDatabase}
+                disabled={isSaving}
+                className="py-2 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
+                title="Batalkan perubahan lokal dan muat data terbaru dari MongoDB"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Muat Ulang Database
+              </button>
+              <button
+                type="submit"
+                disabled={isSaving}
+                className="py-2 px-5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow cursor-pointer transition-colors disabled:opacity-50"
+              >
+                {isSaving ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Menyimpan ke Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    <span>Simpan Seluruh Teks & Legalitas</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
 
           {/* SECTION 1: IDENTITAS & KONTAK */}
