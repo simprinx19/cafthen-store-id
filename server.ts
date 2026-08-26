@@ -42,13 +42,17 @@ function safeReadLocalCache(): Record<string, any> {
   return inMemoryCache;
 }
 
-// MongoDB Atlas Configuration
-let MONGODB_URI = "mongodb+srv://Vercel-Admin-db_compro:A4UTfZd22cX8a9l7@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority";
-if (process.env.MONGODB_URI && !process.env.MONGODB_URI.includes("atlas-lime-horizon")) {
-  MONGODB_URI = process.env.MONGODB_URI;
+// MongoDB Atlas Configuration & Environment Variable Resolution
+const DEFAULT_MONGODB_URI = "mongodb+srv://Vercel-Admin-db_compro:A4UTfZd22cX8a9l7@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority";
+let MONGODB_URI = process.env.MONGODB_URI || DEFAULT_MONGODB_URI;
+
+// Filter out invalid/deprecated placeholder URIs
+if (!MONGODB_URI || MONGODB_URI.includes("atlas-lime-horizon") || (!MONGODB_URI.startsWith("mongodb://") && !MONGODB_URI.startsWith("mongodb+srv://"))) {
+  MONGODB_URI = DEFAULT_MONGODB_URI;
 }
-const DB_NAME = "db-compro";
-const COLLECTION_NAME = "app_storage";
+
+const DB_NAME = process.env.MONGODB_DB_NAME || process.env.DB_NAME || "db-compro";
+const COLLECTION_NAME = process.env.MONGODB_COLLECTION || process.env.COLLECTION_NAME || "app_storage";
 
 let cachedDb: Db | null = null;
 let mongoClientPromise: Promise<MongoClient> | null = null;
@@ -171,15 +175,19 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '30mb' }));
 app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 
-// Health check endpoint
+// Health & Detailed Database Status Endpoint
 const handleHealth = async (req: express.Request, res: express.Response) => {
+  const startTime = Date.now();
   let dbStatus = "disconnected";
   let docsCount = 0;
   let sampleKeys: string[] = [];
+  let pingMs = 0;
+
   try {
     const db = await getMongoDB();
     if (db) {
       await db.command({ ping: 1 });
+      pingMs = Date.now() - startTime;
       dbStatus = `connected (${DB_NAME})`;
       const col = db.collection(COLLECTION_NAME);
       docsCount = await col.countDocuments();
@@ -190,20 +198,77 @@ const handleHealth = async (req: express.Request, res: express.Response) => {
     dbStatus = `error: ${e?.message || 'ping failed'}`;
   }
 
+  // Safely mask connection string password for security
+  const maskedUri = MONGODB_URI.replace(/\/\/(.*?):(.*?)@/, '//***:***@');
+
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.json({ 
     status: "ok", 
     timestamp: new Date().toISOString(), 
     database: `MongoDB Atlas (${DB_NAME})`,
     collection: COLLECTION_NAME,
+    cluster: "db-compro.orkvkuj.mongodb.net",
+    pingLatencyMs: pingMs,
     documentsCount: docsCount,
+    keysCount: sampleKeys.length,
     keys: sampleKeys,
-    dbStatus 
+    dbStatus,
+    environment: {
+      isVercel: Boolean(process.env.VERCEL),
+      nodeEnv: process.env.NODE_ENV || 'development',
+      mongodbUriConfigured: Boolean(process.env.MONGODB_URI),
+      databaseName: DB_NAME,
+      collectionName: COLLECTION_NAME,
+      maskedConnectionUri: maskedUri
+    }
   });
 };
 
 app.get("/api/health", handleHealth);
 app.get("/health", handleHealth);
+app.get("/api/db-status", handleHealth);
+app.get("/db-status", handleHealth);
+
+// Interactive Read-Write-Delete Test Endpoint for Vercel/MongoDB
+app.post("/api/db-test", async (req: express.Request, res: express.Response) => {
+  const testKey = `_test_ping_${Date.now()}`;
+  const testPayload = { test: true, timestamp: new Date().toISOString() };
+  try {
+    const db = await getMongoDB();
+    if (!db) {
+      return res.status(503).json({ success: false, error: "MongoDB not connected" });
+    }
+    const collection = db.collection(COLLECTION_NAME);
+    
+    // 1. Test Write
+    const t0 = Date.now();
+    await collection.updateOne({ key: testKey }, { $set: { key: testKey, value: testPayload } }, { upsert: true });
+    const writeMs = Date.now() - t0;
+
+    // 2. Test Read
+    const t1 = Date.now();
+    const doc = await collection.findOne({ key: testKey });
+    const readMs = Date.now() - t1;
+
+    // 3. Test Clean-up
+    await collection.deleteOne({ key: testKey });
+
+    res.json({
+      success: true,
+      message: "Operasi Tulis, Baca, dan Hapus pada MongoDB Atlas berhasil 100%!",
+      database: DB_NAME,
+      collection: COLLECTION_NAME,
+      latency: {
+        writeMs,
+        readMs,
+        totalMs: writeMs + readMs
+      },
+      verifiedData: doc?.value
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err?.message || 'Database test failed' });
+  }
+});
 
 // Get all stored keys/data
 const handleGetData = async (req: express.Request, res: express.Response) => {

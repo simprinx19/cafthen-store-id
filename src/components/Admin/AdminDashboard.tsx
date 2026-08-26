@@ -41,6 +41,7 @@ import { AdminFinance } from './AdminFinance';
 import { AdminChat } from './AdminChat';
 import { AdminPaymentMethods } from './AdminPaymentMethods';
 import { AdminThemeSettings } from './AdminThemeSettings';
+import { AdminDatabaseSettings } from './AdminDatabaseSettings';
 
 interface AdminDashboardProps {
   isAdminLoggedIn: boolean;
@@ -76,7 +77,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onDataUpdated
 }) => {
   const [currentTab, setCurrentTab] = useState<
-    'overview' | 'cms' | 'theme' | 'users' | 'orders' | 'products' | 'payments' | 'finance' | 'chat'
+    'overview' | 'cms' | 'theme' | 'users' | 'orders' | 'products' | 'payments' | 'finance' | 'chat' | 'database'
   >('overview');
 
   // Login form states if not logged in
@@ -190,7 +191,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     { id: 'products', label: 'Kelola Produk & Komoditas', icon: Package },
     { id: 'payments', label: 'Metode & Pola Pembayaran', icon: CreditCard },
     { id: 'finance', label: 'Keuangan & Pengeluaran', icon: DollarSign },
-    { id: 'chat', label: 'Chat Konsumen', icon: MessageSquare }
+    { id: 'chat', label: 'Chat Konsumen', icon: MessageSquare },
+    { id: 'database', label: 'Database & Variabel Vercel', icon: Database }
   ];
 
   return (
@@ -357,6 +359,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             <AdminChat
               users={users}
               messages={messages}
+              onDataUpdated={onDataUpdated}
+            />
+          )}
+
+          {currentTab === 'database' && (
+            <AdminDatabaseSettings
               onDataUpdated={onDataUpdated}
             />
           )}
