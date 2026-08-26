@@ -84,7 +84,11 @@ export default function App() {
   useEffect(() => {
     applyThemeToDOM(theme);
     reloadData();
-    StorageService.syncWithServer();
+    
+    // Immediate initial sync on app mount
+    StorageService.syncWithServer().then(() => {
+      reloadData();
+    });
 
     // Fetch live USD rate from Google Market API
     ExchangeRateService.fetchLiveRate().then(rate => {
@@ -106,13 +110,17 @@ export default function App() {
       if (e.detail) setExchangeRate(e.detail);
     };
 
-    // Periodic sync with server for cross-device updates
+    // Periodic sync with server for cross-device updates (every 4 seconds)
     const syncInterval = setInterval(() => {
-      StorageService.syncWithServer();
+      StorageService.syncWithServer().then(() => {
+        reloadData();
+      });
     }, 4000);
 
     const handleFocus = () => {
-      StorageService.syncWithServer();
+      StorageService.syncWithServer().then(() => {
+        reloadData();
+      });
     };
 
     window.addEventListener('cafthen_storage_updated', handleStorageUpdate);

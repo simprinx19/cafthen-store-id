@@ -151,7 +151,7 @@ function updateDbStatus(partial: Partial<DbConnectionInfo>) {
   }
 }
 
-// Robust Fetch with Exponential Backoff + Jitter
+// Robust Fetch with Exponential Backoff + Jitter & No-Cache Enforced
 async function fetchWithRetry(
   url: string,
   options: RequestInit = {},
@@ -160,13 +160,32 @@ async function fetchWithRetry(
   let attempt = 0;
   let lastError: any = null;
 
+  // Add cache: 'no-store' and Cache-Control headers to ensure fresh data across devices
+  const cleanOptions: RequestInit = {
+    ...options,
+    cache: 'no-store',
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+      ...(options.headers || {})
+    }
+  };
+
+  // Add timestamp query parameter if GET request without one to bypass any edge/CDN caching
+  let targetUrl = url;
+  if (!options.method || options.method.toUpperCase() === 'GET') {
+    const separator = targetUrl.includes('?') ? '&' : '?';
+    targetUrl = `${targetUrl}${separator}_t=${Date.now()}`;
+  }
+
   while (attempt <= maxRetries) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-      const response = await fetch(url, {
-        ...options,
+      const response = await fetch(targetUrl, {
+        ...cleanOptions,
         signal: controller.signal
       });
       clearTimeout(timeoutId);
@@ -195,12 +214,12 @@ async function fetchWithRetry(
       );
 
       console.warn(
-        `[MongoDB Atlas Sync] Intermittent connection drop or error (${err?.message || 'Network error'}). Attempt ${attempt}/${maxRetries}. Retrying in ${Math.round(backoff)}ms...`
+        `[MongoDB Atlas Sync] Connection attempt ${attempt}/${maxRetries} (${err?.message || 'Network drop'}). Retrying in ${Math.round(backoff)}ms...`
       );
 
       updateDbStatus({
         state: 'reconnecting',
-        lastError: `Reconnecting to MongoDB Atlas (Attempt ${attempt}/${maxRetries}): ${err?.message || 'Network drop'}`,
+        lastError: `Reconnecting to MongoDB Atlas (${attempt}/${maxRetries}): ${err?.message || 'Network drop'}`,
         retryCount: attempt
       });
 
@@ -353,6 +372,10 @@ export const StorageService = {
         if (serverData && typeof serverData === 'object') {
           let updated = false;
           for (const [key, val] of Object.entries(serverData)) {
+            // Exclude device-specific session credentials from global sync
+            if (key === KEYS.ADMIN_LOGGED_IN || key === KEYS.CURRENT_USER) {
+              continue;
+            }
             if (val !== undefined) {
               const localVal = localStorage.getItem(key);
               const serverStr = JSON.stringify(val);
@@ -364,6 +387,9 @@ export const StorageService = {
           }
           if (updated) {
             window.dispatchEvent(new Event('cafthen_storage_updated'));
+            if (serverData[KEYS.THEME_SETTINGS]) {
+              window.dispatchEvent(new CustomEvent('cafthen_theme_updated', { detail: serverData[KEYS.THEME_SETTINGS] }));
+            }
           }
         }
 

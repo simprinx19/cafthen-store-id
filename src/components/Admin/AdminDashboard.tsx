@@ -72,7 +72,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   onDataUpdated
 }) => {
   const [currentTab, setCurrentTab] = useState<
-    'overview' | 'cms' | 'users' | 'orders' | 'products' | 'payments' | 'finance' | 'chat'
+    'overview' | 'cms' | 'theme' | 'users' | 'orders' | 'products' | 'payments' | 'finance' | 'chat'
   >('overview');
 
   // Login form states if not logged in

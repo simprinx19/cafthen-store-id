@@ -67,7 +67,6 @@ const INITIAL_VALUES_MAP: Record<string, any> = {
   cafthen_payment_settings: mockData.INITIAL_PAYMENT_SETTINGS,
   cafthen_theme_settings: mockData.INITIAL_THEME_SETTINGS,
   cafthen_exchange_rate: 17685,
-  cafthen_admin_logged_in: false,
 };
 
 async function migrateLocalDataToMongoDB(db: Db) {
@@ -120,13 +119,17 @@ async function getMongoDB(): Promise<Db | null> {
     if (!mongoClientPromise) {
       console.log(`[MongoDB] Connecting to MongoDB Atlas cluster (Database: ${DB_NAME})...`);
       const client = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 10000,
-        connectTimeoutMS: 10000,
+        serverSelectionTimeoutMS: 8000,
+        connectTimeoutMS: 8000,
         maxPoolSize: 10,
         minPoolSize: 1,
         retryWrites: true,
       });
-      mongoClientPromise = client.connect();
+      mongoClientPromise = client.connect().catch(err => {
+        mongoClientPromise = null;
+        cachedDb = null;
+        throw err;
+      });
     }
     
     const client = await mongoClientPromise;
@@ -150,47 +153,60 @@ async function getMongoDB(): Promise<Db | null> {
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Enable CORS for all origins & client devices
+// Enable CORS and disable all caching for real-time synchronization
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma, Expires");
+  res.header("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+  res.header("Pragma", "no-cache");
+  res.header("Expires", "0");
+  res.header("Surrogate-Control", "no-store");
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
   next();
 });
 
-app.use(express.json({ limit: '25mb' }));
-app.use(express.urlencoded({ extended: true, limit: '25mb' }));
+app.use(express.json({ limit: '30mb' }));
+app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 
-// API Routes for Cross-Device Data Synchronization & MongoDB Atlas Persistence
-app.get("/api/health", async (req, res) => {
+// Health check endpoint
+const handleHealth = async (req: express.Request, res: express.Response) => {
   let dbStatus = "disconnected";
   let docsCount = 0;
+  let sampleKeys: string[] = [];
   try {
     const db = await getMongoDB();
     if (db) {
       await db.command({ ping: 1 });
       dbStatus = `connected (${DB_NAME})`;
-      docsCount = await db.collection(COLLECTION_NAME).countDocuments();
+      const col = db.collection(COLLECTION_NAME);
+      docsCount = await col.countDocuments();
+      const docs = await col.find({}, { projection: { key: 1, _id: 0 } }).toArray();
+      sampleKeys = docs.map((d: any) => d.key);
     }
   } catch (e: any) {
     dbStatus = `error: ${e?.message || 'ping failed'}`;
   }
 
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.json({ 
     status: "ok", 
     timestamp: new Date().toISOString(), 
     database: `MongoDB Atlas (${DB_NAME})`,
     collection: COLLECTION_NAME,
     documentsCount: docsCount,
+    keys: sampleKeys,
     dbStatus 
   });
-});
+};
+
+app.get("/api/health", handleHealth);
+app.get("/health", handleHealth);
 
 // Get all stored keys/data
-app.get("/api/data", async (req, res) => {
+const handleGetData = async (req: express.Request, res: express.Response) => {
   try {
     let result: Record<string, any> = {};
 
@@ -200,7 +216,7 @@ app.get("/api/data", async (req, res) => {
       const collection = db.collection(COLLECTION_NAME);
       const docs = await collection.find({}).toArray();
       if (docs && docs.length > 0) {
-        docs.forEach(doc => {
+        docs.forEach((doc: any) => {
           if (doc.key) {
             result[doc.key] = doc.value;
           }
@@ -238,16 +254,20 @@ app.get("/api/data", async (req, res) => {
     // 4. Update local safe cache
     safeWriteLocalCache(result);
 
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
     res.json(result);
   } catch (err: any) {
     console.error("Error reading data:", err);
     const fallback = safeReadLocalCache();
     res.json(fallback);
   }
-});
+};
+
+app.get("/api/data", handleGetData);
+app.get("/data", handleGetData);
 
 // Save/Update specific key or full state
-app.post("/api/data", async (req, res) => {
+const handlePostData = async (req: express.Request, res: express.Response) => {
   try {
     const { key, value } = req.body;
     let localData = safeReadLocalCache();
@@ -288,12 +308,16 @@ app.post("/api/data", async (req, res) => {
       }
     }
 
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     res.json({ success: true, savedToDb, database: DB_NAME, data: localData });
   } catch (err: any) {
     console.error("Error writing data to MongoDB/Server:", err);
     res.status(500).json({ error: "Failed to save data", details: err?.message || err });
   }
-});
+};
+
+app.post("/api/data", handlePostData);
+app.post("/data", handlePostData);
 
 // Safeguard: Catch-all for any unhandled /api/* requests to return JSON instead of HTML
 app.use("/api/*", (req, res) => {
