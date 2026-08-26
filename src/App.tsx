@@ -110,12 +110,12 @@ export default function App() {
       if (e.detail) setExchangeRate(e.detail);
     };
 
-    // Periodic sync with server for cross-device updates (every 4 seconds)
+    // Periodic sync with server for cross-device updates (every 8 seconds)
     const syncInterval = setInterval(() => {
       StorageService.syncWithServer().then(() => {
         reloadData();
       });
-    }, 4000);
+    }, 8000);
 
     const handleFocus = () => {
       StorageService.syncWithServer().then(() => {

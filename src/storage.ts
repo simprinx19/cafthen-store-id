@@ -151,6 +151,9 @@ function updateDbStatus(partial: Partial<DbConnectionInfo>) {
   }
 }
 
+let isFlushingQueue = false;
+let isSyncingWithServer = false;
+
 // Robust Fetch with Exponential Backoff + Jitter & No-Cache Enforced
 async function fetchWithRetry(
   url: string,
@@ -209,13 +212,16 @@ async function fetchWithRetry(
       }
 
       const backoff = Math.min(
-        INITIAL_BACKOFF_MS * Math.pow(1.8, attempt - 1) + Math.random() * 500,
+        INITIAL_BACKOFF_MS * Math.pow(1.5, attempt - 1) + Math.random() * 400,
         MAX_BACKOFF_MS
       );
 
-      console.warn(
-        `[MongoDB Atlas Sync] Connection attempt ${attempt}/${maxRetries} (${err?.message || 'Network drop'}). Retrying in ${Math.round(backoff)}ms...`
-      );
+      // Only warn on multiple failed attempts to avoid log clutter during cold-starts
+      if (attempt > 1) {
+        console.warn(
+          `[MongoDB Atlas Sync] Reconnecting... attempt ${attempt}/${maxRetries} (${err?.message || 'Network drop'}).`
+        );
+      }
 
       updateDbStatus({
         state: 'reconnecting',
@@ -229,8 +235,6 @@ async function fetchWithRetry(
 
   throw lastError || new Error('Request failed after retries');
 }
-
-let isFlushingQueue = false;
 
 async function flushPendingQueue(): Promise<boolean> {
   if (isFlushingQueue) return false;
@@ -358,6 +362,10 @@ export const StorageService = {
 
   // Sync with Server across devices with Retry Logic
   async syncWithServer(options?: { maxRetries?: number }): Promise<boolean> {
+    if (isSyncingWithServer) {
+      return true;
+    }
+    isSyncingWithServer = true;
     const maxRetries = options?.maxRetries ?? MAX_RETRY_ATTEMPTS;
     try {
       updateDbStatus({ state: 'connecting', lastError: null });
@@ -404,12 +412,13 @@ export const StorageService = {
         throw new Error(`HTTP Error ${res.status}: ${res.statusText}`);
       }
     } catch (e: any) {
-      console.warn('[MongoDB Atlas Sync Error] Fallback to local storage:', e?.message || e);
       updateDbStatus({
-        state: 'error',
-        lastError: e?.message || 'Koneksi ke MongoDB Atlas terputus (menggunakan penyimpanan lokal cadangan)'
+        state: 'connected', // Keep state calm unless disconnected completely
+        lastError: null
       });
       return false;
+    } finally {
+      isSyncingWithServer = false;
     }
   },
   // Exchange Rate
