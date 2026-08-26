@@ -1,0 +1,1083 @@
+import {
+  CompanyProfileData,
+  Product,
+  TeamMember,
+  ActivityPhoto,
+  UserProfile,
+  Order,
+  ExpenseRecord,
+  ChatMessage,
+  NotificationItem,
+  PaymentSettingsState
+} from './types';
+import { DEFAULT_CIP_LOGO } from './utils/logoPresets';
+
+export const INITIAL_PAYMENT_SETTINGS: PaymentSettingsState = {
+  methods: [
+    {
+      id: 'method-50-50',
+      code: '50:50',
+      name: 'Skema Termin 50:50 (DP 50% & Pelunasan Saat Tiba)',
+      description: 'DP 50% dibayarkan saat penandatanganan kontrak digital & PO. Sisa 50% dibayarkan setelah barang tiba di lokasi proyek / pelabuhan bongkar.',
+      enabled: true,
+      badge: 'TERPOPULER',
+      downPaymentPercent: 50,
+      finalPaymentPercent: 50,
+      instructions: 'Transfer DP 50% ke rekening resmi perusahaan saat menandatangani kontrak digital. Bukti transfer diverifikasi otomatis oleh tim legal dan keuangan.',
+      terms: [
+        'DP 50% dialokasikan untuk reservasi kuota komoditas dan persiapan armada.',
+        'Sisa 50% dilunasi sebelum pembongkaran muatan di lokasi selesai.',
+        'Faktur pajak e-Faktur ECoretax diterbitkan sesuai termin.'
+      ]
+    },
+    {
+      id: 'method-50-40-10',
+      code: '50:40:10',
+      name: 'Skema Bertahap 50:40:10 (Progres Pemuatan & Pelunasan)',
+      description: 'Termin 3 tahap: DP 50% saat kontrak, Progres 40% saat pemuatan armada (loading port/depot), dan Pelunasan 10% saat tiba di lokasi.',
+      enabled: true,
+      badge: 'REKOMENDASI PROYEK BESAR',
+      downPaymentPercent: 50,
+      progressPaymentPercent: 40,
+      finalPaymentPercent: 10,
+      instructions: 'Ideal untuk pengadaan volume tinggi dan jalur perairan (Tongkang/Mother Vessel) dengan transparansi bertahap.',
+      terms: [
+        'Tahap 1 (50%): Saat tanda tangan kontrak dan PO.',
+        'Tahap 2 (40%): Saat tanggal progres pengiriman & pemuatan armada mulai dilakukan (disertai foto timbang & video loading).',
+        'Tahap 3 (10%): Setelah armada merapat dan tiba di pelabuhan/gudang tujuan.'
+      ]
+    },
+    {
+      id: 'method-cash',
+      code: 'Cash',
+      name: 'Pembayaran Tunai Penuh / Transfer Bank 100%',
+      description: 'Pelunasan 100% di awal melalui transfer langsung antar bank sebelum pengiriman/pelepasan armada logistik.',
+      enabled: true,
+      badge: 'PRIORITAS DISPATCH CEPAT',
+      downPaymentPercent: 100,
+      finalPaymentPercent: 0,
+      instructions: 'Transfer 100% nilai kontrak ke rekening resmi perusahaan. Dispatch dan pemuatan armada langsung diprioritaskan di hari kerja yang sama.',
+      terms: [
+        'Jadwal muat prioritas utama dalam 1x24 jam.',
+        'Faktur pajak e-Faktur diterbitkan lunas penuh seketika.',
+        'Disertai polis asuransi pengiriman langsung.'
+      ]
+    },
+    {
+      id: 'method-qris',
+      code: 'QRIS',
+      name: 'QRIS Dinamis & Statis Bank Indonesia',
+      description: 'Pembayaran instan melalui scan QRIS resmi PT. CAFTHEN INDO PROJECT yang mendukung semua M-Banking & E-Wallet.',
+      enabled: true,
+      badge: 'INSTAN & OTOMATIS',
+      downPaymentPercent: 100,
+      finalPaymentPercent: 0,
+      instructions: 'Pindai barcode QRIS resmi menggunakan aplikasi mobile banking (BCA, Mandiri, BRI, BNI, Danamon, CIMB) atau E-Wallet (GoPay, OVO, Dana).',
+      terms: [
+        'Verifikasi sistem otomatis detik itu juga.',
+        'Bebas biaya admin transfer antar bank.',
+        'Maksimum per transaksi sesuai limit harian QRIS pengguna.'
+      ]
+    },
+    {
+      id: 'method-lc-sight',
+      code: 'LC AT SIGHT',
+      name: 'Letter of Credit (L/C) At Sight',
+      description: 'Instrumen perbankan internasional & domestik dengan pembayaran langsung begitu dokumen pengapalan lengkap diverifikasi bank.',
+      enabled: true,
+      badge: 'KORPORASI & EKSPOR',
+      downPaymentPercent: 0,
+      finalPaymentPercent: 100,
+      minTransactionAmountIDR: 200000000,
+      requiresVerificationDocs: true,
+      instructions: 'Penerbitan L/C At Sight Irrevocable melalui Bank Devisa Nasional (Mandiri / BCA / BNI) ditujukan kepada Bank Penerima PT. CAFTHEN INDO PROJECT.',
+      terms: [
+        'Khusus transaksi minimal Rp 200.000.000,- atau kontrak volume tinggi.',
+        'Presentasi dokumen lengkap: Bill of Lading, Certificate of Analysis (Sucofindo), Faktur Pajak, Polis Asuransi.',
+        'Verifikasi oleh divisi perbankan dan legalitas korporasi.'
+      ]
+    },
+    {
+      id: 'method-lc-usance',
+      code: 'LC USANCE',
+      name: 'Letter of Credit (L/C) Usance (Berjangka 30-90 Hari)',
+      description: 'Fasilitas kredit berjangka waktu 30 hingga 90 hari setelah tanggal penerbitan Bill of Lading (B/L) pengapalan komoditas.',
+      enabled: true,
+      badge: 'KREDIT BERJANGKA MITRA',
+      downPaymentPercent: 0,
+      finalPaymentPercent: 100,
+      minTransactionAmountIDR: 500000000,
+      requiresVerificationDocs: true,
+      instructions: 'Penerbitan L/C Usance Irrevocable dengan jangka waktu 30/60/90 hari setelah B/L disetujui.',
+      terms: [
+        'Khusus bagi perusahaan mitra terverifikasi dengan legalitas NIB & NPWP lengkap.',
+        'Wajib melalui evaluasi credit rating dan persetujuan Dewan Direksi.',
+        'Seluruh beban diskonto/bunga bank diatur sesuai kesepakatan tertulis.'
+      ]
+    }
+  ],
+  bankAccounts: [
+    {
+      id: 'bank-1',
+      bankName: 'Bank Mandiri',
+      accountNumber: '110-00-1849201-9',
+      accountHolder: 'PT. CAFTHEN INDO PROJECT / HENDRI PUTRA.S.Kom',
+      branch: 'KC Jambi Telanaipura',
+      isPrimary: true,
+      notes: 'Rekening Utama Operasional & Kontrak Pengadaan Nasional'
+    },
+    {
+      id: 'bank-2',
+      bankName: 'Bank Central Asia (BCA)',
+      accountNumber: '739-094-8210',
+      accountHolder: 'PT. CAFTHEN INDO PROJECT / HENDRI PUTRA',
+      branch: 'KCU Jambi Hayam Wuruk',
+      isPrimary: false,
+      notes: 'Rekening Khusus Transaksi Cepat & Kliring Realtime'
+    },
+    {
+      id: 'bank-3',
+      bankName: 'Bank Negara Indonesia (BNI)',
+      accountNumber: '098-449-1120',
+      accountHolder: 'PT. CAFTHEN INDO PROJECT',
+      branch: 'KC Jambi Sutomo',
+      isPrimary: false,
+      notes: 'Rekening Escrow & Kliring Proyek Konstruksi Sipil'
+    }
+  ],
+  qrisConfig: {
+    merchantName: 'PT. CAFTHEN INDO PROJECT',
+    nmid: 'ID10200849201948',
+    qrisImageUrl: 'https://images.unsplash.com/photo-1595079672139-545c0ec5ebba?auto=format&fit=crop&w=400&q=80',
+    enabled: true
+  },
+  globalPaymentTerms: [
+    'Seluruh pembayaran hanya sah bila ditujukan ke rekening resmi yang tercantum dalam kontrak digital ini.',
+    'Pembayaran menggunakan cek/giro dianggap sah setelah dana berhasil dikliringkan (cleared funds).',
+    'Setiap bukti transfer wajib diunggah pada portal dashboard konsumen untuk verifikasi otomatis.',
+    'Faktur pajak e-Faktur ECoretax DJP diterbitkan maksimal 1x24 jam setelah pembayaran termin terverifikasi.'
+  ],
+  duePaymentHours: 24,
+  allowCustomMilestones: false
+};
+
+export const INITIAL_COMPANY_PROFILE: CompanyProfileData = {
+  companyName: 'PT. CAFTHEN INDO PROJECT',
+  storeName: 'CAFTHEN STORE ID',
+  logoUrl: DEFAULT_CIP_LOGO,
+  address: 'Jl. Lintas Jambi Bulian Kota Kampus III, Kel. Mendalo Indah Kec. Jambi Luar Kota Kab. Muaro Jambi – Provinsi Jambi (36361)',
+  email: 'cafthen@gmail.com',
+  phone: '+62831-49090950',
+  owner: 'HENDRI PUTRA.S.Kom',
+  director: 'MASITHA.SH',
+  youtubeVideoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ', // Can be customized in CMS
+  youtubeVideoTitle: 'Company Profile & Dokumentasi Kegiatan Proyek PT. CAFTHEN INDO PROJECT',
+  mapsUrl: 'https://www.google.com/maps/place/PT.+CAFTHEN+INDO+PROJECT/@-1.6157744,103.519586,17z/data=!3m1!4b1!4m6!3m5!1s0x2e2f636d4f9a2223:0x165352e086efcb5a!8m2!3d-1.6157798!4d103.5221609!16s%2Fg%2F11sthr5whz',
+  visi: 'Menjadi perusahaan terdepan, terpercaya, dan berdaya saing global di Indonesia dalam bidang Perdagangan Umum (General Trading), Pengadaan Barang & Jasa (Procurement), serta Jasa Konstruksi Bangunan Sipil dengan mengedepankan integritas, kepatuhan regulasi, dan kepuasan mitra strategis.',
+  misi: [
+    'Menyediakan komoditas dan material konstruksi berkualitas tinggi dengan standar SNI dan sertifikasi internasional.',
+    'Memberikan layanan pengadaan barang dan jasa yang transparan, tepat waktu, dan akuntabel berbasis digitalisasi kontrak.',
+    'Melaksanakan proyek konstruksi bangunan sipil, infrastruktur jalan, jembatan, dan sarana industri dengan standar K3 dan mutu terbaik.',
+    'Membangun jejaring rantai pasok logistik darat (Trucking) dan perairan (Tongkang & Mother Vessel) yang efisien dan andal.',
+    'Menerapkan tata kelola perpajakan (ECoretax) dan kepatuhan hukum yang solid demi keamanan transaksi jangka panjang para mitra usaha.'
+  ],
+  bankAccounts: [
+    {
+      bankName: 'Bank Mandiri',
+      accountNumber: '110-00-1849201-9',
+      accountHolder: 'PT. CAFTHEN INDO PROJECT / HENDRI PUTRA.S.Kom'
+    },
+    {
+      bankName: 'Bank Central Asia (BCA)',
+      accountNumber: '739-094-8210',
+      accountHolder: 'PT. CAFTHEN INDO PROJECT / HENDRI PUTRA'
+    },
+    {
+      bankName: 'Bank Negara Indonesia (BNI)',
+      accountNumber: '098-449-1120',
+      accountHolder: 'PT. CAFTHEN INDO PROJECT'
+    }
+  ],
+  qrisImageUrl: 'https://images.unsplash.com/photo-1595079672139-545c0ec5ebba?auto=format&fit=crop&w=400&q=80'
+};
+
+export const INITIAL_TEAM_MEMBERS: TeamMember[] = [
+  {
+    id: 'team-1',
+    name: 'HENDRI PUTRA.S.Kom',
+    position: 'Owner & Komisaris Utama',
+    photoUrl: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=600&q=80',
+    bio: 'Pendiri dan pemilik PT. CAFTHEN INDO PROJECT dengan visi ekspansi nasional di bidang komoditas perdagangan, digitalisasi procurement, dan pembangunan infrastruktur modern.',
+    socials: {
+      email: 'cafthen@gmail.com',
+      whatsapp: '+62831-49090950'
+    }
+  },
+  {
+    id: 'team-2',
+    name: 'MASITHA.SH',
+    position: 'Direktur Utama',
+    photoUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80',
+    bio: 'Memimpin tata kelola korporasi, legalitas perjanjian kontrak digital, kepatuhan regulasi ekspor-impor, dan operasional strategis seluruh cabang perusahaan.',
+    socials: {
+      email: 'direktur.masitha@cafthen.co.id',
+      whatsapp: '+62831-49090950'
+    }
+  },
+  {
+    id: 'team-3',
+    name: 'Ir. Bagas Pratama, M.T.',
+    position: 'General Manager & Civil Engineer Head',
+    photoUrl: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=600&q=80',
+    bio: 'Berpengalaman lebih dari 14 tahun dalam memimpin proyek konstruksi sipil, cut & fill tanah, jembatan, dan supervisi kualitas material beton & aspal.',
+    socials: {
+      email: 'bagas.civil@cafthen.co.id'
+    }
+  },
+  {
+    id: 'team-4',
+    name: 'Siti Rahmadani, S.E., Ak.',
+    position: 'Finance & ECoretax Tax Manager',
+    photoUrl: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=600&q=80',
+    bio: 'Mengelola tata kelola keuangan, laporan laba-rugi, permodalan proyek, dan kepatuhan sistem perpajakan terpadu ECoretax PPN 11% & PPh.',
+    socials: {
+      email: 'finance@cafthen.co.id'
+    }
+  },
+  {
+    id: 'team-5',
+    name: 'Rian Fahreza, S.T.',
+    position: 'Head of Procurement & Logistics (Tongkang/Vessel)',
+    photoUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+    bio: 'Spesialis operasional rantai pasok batubara, pengapalan tongkang 300 feet, armada trucking tronton, serta koordinasi surveyor pelabuhan.',
+    socials: {
+      email: 'logistik@cafthen.co.id'
+    }
+  }
+];
+
+export const INITIAL_ACTIVITY_PHOTOS: ActivityPhoto[] = [
+  {
+    id: 'act-1',
+    title: 'Pemuatan Batu Bara ke Tongkang 300ft (Transhipment Sungai Batanghari)',
+    category: 'Pemuatan Kapal & Logistik',
+    imageUrl: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80',
+    description: 'Proses loading batubara GAR 4200 dari stockpile dermaga Jambi menuju Mother Vessel di perairan Muara Sabak.',
+    date: '18 Agustus 2026',
+    location: 'Pelabuhan Khusus Batanghari, Jambi'
+  },
+  {
+    id: 'act-2',
+    title: 'Konstruksi Pengecoran Jalan Rigid Pavement & Pondasi Jembatan',
+    category: 'Konstruksi Sipil',
+    imageUrl: 'https://images.unsplash.com/photo-1541888946425-d0fbb186156a?auto=format&fit=crop&w=800&q=80',
+    description: 'Pengerjaan proyek konstruksi jalan akses industri beton K-350 menggunakan material agregat dan semen curah mutu tinggi.',
+    date: '10 Agustus 2026',
+    location: 'Mendalo - Muaro Jambi'
+  },
+  {
+    id: 'act-3',
+    title: 'Pengiriman Armada Dump Truck Tronton Besi Beton & Agregat',
+    category: 'Pengadaan & Material',
+    imageUrl: 'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80',
+    description: 'Distribusi material pengadaan konstruksi jalur darat (Trucking) dengan skema Franco sampai di titik proyek mitra.',
+    date: '02 Agustus 2026',
+    location: 'Lintas Jambi - Palembang'
+  },
+  {
+    id: 'act-4',
+    title: 'Inspeksi Kualitas & Uji Kuat Tekan Laboratorium Beton Civil',
+    category: 'Quality Control',
+    imageUrl: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
+    description: 'Pemeriksaan standar mutu bahan material, uji slump beton, dan sertifikasi kelayakan bersama surveyor independen.',
+    date: '25 Juli 2026',
+    location: 'Lab Teknik Sipil PT. CAFTHEN INDO PROJECT'
+  },
+  {
+    id: 'act-5',
+    title: 'Operasional Alat Berat Excavator & Bulldozer Land Clearing Proyek',
+    category: 'Konstruksi Sipil',
+    imageUrl: 'https://images.unsplash.com/photo-1579451861283-a2239070aaa9?auto=format&fit=crop&w=800&q=80',
+    description: 'Pekerjaan perataan tanah (cut and fill) dan penyiapan lahan kawasan pergudangan logistik seluas 15 hektar.',
+    date: '14 Juli 2026',
+    location: 'Kawasan Industri Terpadu Jambi'
+  },
+  {
+    id: 'act-6',
+    title: 'Sandar Mother Vessel Pengapalan Pasir Silika & Mineral Ekspor',
+    category: 'Pemuatan Kapal & Logistik',
+    imageUrl: 'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=800&q=80',
+    description: 'Koordinasi pemuatan mineral kapal kargo internasional dengan skema FOB Mother Vessel didukung dokumentasi LC At Sight.',
+    date: '05 Juli 2026',
+    location: 'Pelabuhan Samudera Talang Duku'
+  }
+];
+
+export const INITIAL_PRODUCTS: Product[] = [
+  {
+    id: 'PROD-001',
+    name: 'Batu Bara Curah Steam Coal (GAR 4200 - 5000 kcal/kg)',
+    category: 'Perdagangan Komoditas & Mineral',
+    priceIDR: 980000, // per ton (base FOB)
+    priceUSD: 59.94,
+    patternPrices: {
+      Loco: {
+        priceIDR: 890000,
+        priceUSD: 54.43,
+        description: 'Pengambilan mandiri di stockpile tambang/jetty Muaro Jambi',
+        enabled: true
+      },
+      FOB: {
+        priceIDR: 980000,
+        priceUSD: 59.94,
+        description: 'FOB Tongkang 300ft di Pelabuhan Muat Batanghari / Talang Duku',
+        enabled: true
+      },
+      Franco: {
+        priceIDR: 1120000,
+        priceUSD: 68.50,
+        description: 'Franco sampai di stockpile PLTU / pabrik konsumen jalur darat (Dump Truck)',
+        enabled: true
+      },
+      CIF: {
+        priceIDR: 1250000,
+        priceUSD: 76.45,
+        description: 'CIF Pelabuhan tujuan (Merak / Cigading / Gresik) termasuk premi asuransi & pelayaran',
+        enabled: true
+      }
+    },
+    stock: 25000,
+    unit: 'Ton',
+    origin: 'Tambang Muaro Jambi / Sarolangun (Jambi)',
+    images: [
+      'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1559136555-9303baea8ebd?auto=format&fit=crop&w=800&q=80'
+    ],
+    specs: [
+      'Gross Calorific Value: GAR 4200 - 5000 kcal/kg (ADB 4500 - 5300)',
+      'Total Moisture (ARB): 32% - 36%',
+      'Inherent Moisture: 14% - 16%',
+      'Ash Content (ADB): 6% - 8% Max',
+      'Total Sulfur: 0.3% - 0.7% Low Sulfur',
+      'Size: 0 - 50 mm (90% Passing)',
+      'Sertifikat Analisis: Sucofindo / Carsurin / Surveyor Indonesia COA & COW Ready',
+      'Tersedia Pola: FOB Tongkang, FOB Vessel, Franco PLTU/Pabrik, Loco Jetty'
+    ],
+    ecoretaxType: 'Include',
+    description: 'Komoditas batubara kalori menengah dan tinggi untuk kebutuhan PLTU, pabrik semen, tekstil, dan peleburan logam dengan jaminan pasokan berkesinambungan dan legalitas IUP OP resmi.',
+    featured: true
+  },
+  {
+    id: 'PROD-002',
+    name: 'Besi Beton Ulir & Polos Standar SNI 2052:2017 (Diameter 8mm - 32mm)',
+    category: 'Konstruksi Sipil & Material',
+    priceIDR: 12500, // per kg
+    priceUSD: 0.76,
+    patternPrices: {
+      Loco: {
+        priceIDR: 11800,
+        priceUSD: 0.72,
+        description: 'Loco ambil di gudang distributor / pabrikan',
+        enabled: true
+      },
+      FOB: {
+        priceIDR: 12500,
+        priceUSD: 0.76,
+        description: 'FOB Truk tronton muat di depo logistik',
+        enabled: true
+      },
+      Franco: {
+        priceIDR: 13600,
+        priceUSD: 0.83,
+        description: 'Franco diantar sampai titik lokasi proyek proyek sipil',
+        enabled: true
+      },
+      CIF: {
+        priceIDR: 14800,
+        priceUSD: 0.91,
+        description: 'CIF Pelabuhan antar pulau termasuk asuransi ekspedisi',
+        enabled: true
+      }
+    },
+    stock: 80000,
+    unit: 'Kg',
+    origin: 'Krakatau Cilegon / Pabrikan Resmi SNI',
+    images: [
+      'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1541888946425-d0fbb186156a?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?auto=format&fit=crop&w=800&q=80'
+    ],
+    specs: [
+      'Standar Mutu: SNI 2052:2017 BjTS 420B (Ulir) & BjTP 280 (Polos)',
+      'Panjang Standar: 12 Meter per Batang',
+      'Diameter Tersedia: 8mm, 10mm, 12mm, 13mm, 16mm, 19mm, 22mm, 25mm, 32mm',
+      'Toleransi Dimensi: ±0.3mm sesuai regulasi SNI',
+      'Dilengkapi Mill Certificate resmi pabrik',
+      'Dukungan Pengiriman: Trucking Tronton / Fuso langsung ke lokasi proyek (Franco) atau ambil di gudang (Loco)'
+    ],
+    ecoretaxType: 'Include',
+    description: 'Besi tulangan beton berkualitas SNI untuk struktur gedung bertingkat, pondasi jembatan, bendungan, dan infrastruktur sipil dengan daya tahan tarik optimal.',
+    featured: true
+  },
+  {
+    id: 'PROD-003',
+    name: 'Semen Curah Portland Composite Cement (PCC) & Type I Standar SNI',
+    category: 'Konstruksi Sipil & Material',
+    priceIDR: 1350000, // per ton
+    priceUSD: 82.57,
+    patternPrices: {
+      Loco: {
+        priceIDR: 1220000,
+        priceUSD: 74.62,
+        description: 'Loco Silo Pabrik Semen',
+        enabled: true
+      },
+      FOB: {
+        priceIDR: 1350000,
+        priceUSD: 82.57,
+        description: 'FOB Truk Kapsul Silo di Packing Plant',
+        enabled: true
+      },
+      Franco: {
+        priceIDR: 1480000,
+        priceUSD: 90.52,
+        description: 'Franco diantar sampai Silo Batching Plant Proyek',
+        enabled: true
+      },
+      CIF: {
+        priceIDR: 1650000,
+        priceUSD: 100.92,
+        description: 'CIF Pelabuhan tujuan via Kapal Semen Curah',
+        enabled: true
+      }
+    },
+    stock: 5000,
+    unit: 'Ton',
+    origin: 'Pabrik Semen Baturaja / Padang',
+    images: [
+      'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1541888946425-d0fbb186156a?auto=format&fit=crop&w=800&q=80'
+    ],
+    specs: [
+      'Tipe: PCC (Portland Composite Cement) & OPC Type I Curah (Bulk)',
+      'Wadah Pengiriman: Truk Kapsul Silo 25-30 Ton',
+      'Kuat Tekan 28 Hari: > 350 kg/cm²',
+      'Waktu Pengikatan: Awal > 45 menit, Akhir < 375 menit',
+      'Sangat cocok untuk Batching Plant Ready Mix, Precast Beton, dan Jalan Rigid Pavement'
+    ],
+    ecoretaxType: 'Include',
+    description: 'Semen curah industri kualitas premium untuk kebutuhan batching plant beton cor readymix dan pabrikasi beton pracetak dengan kestabilan formula prima.',
+    featured: true
+  },
+  {
+    id: 'PROD-004',
+    name: 'Batu Split Agregat Kasar & Halus (Ukuran 1-2, 2-3, Abu Batu)',
+    category: 'Konstruksi Sipil & Material',
+    priceIDR: 240000, // per m3
+    priceUSD: 14.68,
+    patternPrices: {
+      Loco: {
+        priceIDR: 210000,
+        priceUSD: 12.84,
+        description: 'Loco ambil di stockpile crusher quarry',
+        enabled: true
+      },
+      FOB: {
+        priceIDR: 240000,
+        priceUSD: 14.68,
+        description: 'FOB Muat di atas Dump Truck / Tongkang Dermaga Asal',
+        enabled: true
+      },
+      Franco: {
+        priceIDR: 285000,
+        priceUSD: 17.43,
+        description: 'Franco diantar Dump Truck sampai titik proyek jalan / gedung',
+        enabled: true
+      },
+      CIF: {
+        priceIDR: 325000,
+        priceUSD: 19.88,
+        description: 'CIF Pelabuhan / Dermaga tujuan via Tongkang',
+        enabled: true
+      }
+    },
+    stock: 15000,
+    unit: 'M3',
+    origin: 'Quarry Merangin & Bungo (Jambi)',
+    images: [
+      'https://images.unsplash.com/photo-1578885136359-16c8bd4d3a8e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1541888946425-d0fbb186156a?auto=format&fit=crop&w=800&q=80'
+    ],
+    specs: [
+      'Gradasi: Split 1/2 (10-20mm), Split 2/3 (20-30mm), Screening (5-10mm), Abu Batu (0-5mm)',
+      'Specific Gravity: > 2.55 gr/cm³',
+      'Keausan Los Angeles Abrasion: < 24%',
+      'Kadar Lumpur: < 1.0%',
+      'Armada: Dump Truck Index 8 M3, 24 M3, atau Tongkang 2000 M3'
+    ],
+    ecoretaxType: 'Exclude',
+    description: 'Material agregat batu pecah andesit/granit keras untuk campuran aspal hotmix, beton struktural, dan lapis pondasi atas (LPA/LPB) jalan tol dan arteri.',
+    featured: false
+  },
+  {
+    id: 'PROD-005',
+    name: 'Paket Jasa Konstruksi Sipil & Bangunan Gedung / Infrastruktur Jalan',
+    category: 'Jasa Kontraktor & Engineering',
+    priceIDR: 450000000, // per paket
+    priceUSD: 27522.94,
+    patternPrices: {
+      Loco: {
+        priceIDR: 420000000,
+        priceUSD: 25688.07,
+        description: 'Skema Jasa Pelaksanaan Lapangan Murni (Material Disediakan Pemilik Proyek)',
+        enabled: true
+      },
+      FOB: {
+        priceIDR: 450000000,
+        priceUSD: 27522.94,
+        description: 'Skema Konstruksi Sipil Sub-Struktur & Pondasi Standar',
+        enabled: true
+      },
+      Franco: {
+        priceIDR: 495000000,
+        priceUSD: 30275.23,
+        description: 'Skema All In (Material, Jasa Konstruksi, Mobilisasi Alat, dan Perapihan Selesai Beres)',
+        enabled: true
+      },
+      CIF: {
+        priceIDR: 540000000,
+        priceUSD: 33027.52,
+        description: 'Skema Proyek Antar Wilayah / Kepulauan Termasuk Logistik Khusus & Asuransi CAR',
+        enabled: true
+      }
+    },
+    stock: 10,
+    unit: 'Paket',
+    origin: 'PT. CAFTHEN INDO PROJECT (Divisi Konstruksi Sipil)',
+    images: [
+      'https://images.unsplash.com/photo-1541888946425-d0fbb186156a?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1503387762-592deb58ef4e?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+    ],
+    specs: [
+      'Lingkup Pekerjaan: Bangunan Gedung, Gudang Baja Struktural, Jalan Aspal Hotmix, Drainase Beton Precast',
+      'Tenaga Ahli: Bersertifikat SKA / SKK Konstruksi LPJK PUPR',
+      'Sistem Kerja: Kontrak Lump Sum / Unit Price dengan Jaminan Pelaksanaan & Pemeliharaan',
+      'Manajemen K3 (SMK3) & Asuransi CAR (Contractor All Risks) lengkap',
+      'Didukung armada alat berat mandiri (Excavator, Tandem Roller, Grader, Asphalt Finisher)'
+    ],
+    ecoretaxType: 'Include',
+    description: 'Layanan terintegrasi perencanaan, pengadaan material, dan pelaksanaan konstruksi sipil berstandar tinggi dengan pengawasan mutu ketat.',
+    featured: true
+  },
+  {
+    id: 'PROD-006',
+    name: 'Sewa & Pengadaan Alat Berat Excavator Komatsu PC200-8 & Bulldozer D85',
+    category: 'Pengadaan Alat & Logistik',
+    priceIDR: 195000, // per jam
+    priceUSD: 11.93,
+    patternPrices: {
+      Loco: {
+        priceIDR: 180000,
+        priceUSD: 11.01,
+        description: 'Sewa Lepas Kunci (BBM & Operator oleh Penyewa di Lokasi Workshop)',
+        enabled: true
+      },
+      FOB: {
+        priceIDR: 195000,
+        priceUSD: 11.93,
+        description: 'Sewa Termasuk Operator Standar (BBM Penyewa)',
+        enabled: true
+      },
+      Franco: {
+        priceIDR: 235000,
+        priceUSD: 14.37,
+        description: 'Sewa All In (Unit + Operator SIO + BBM Solar Industri diantar ke Titik Proyek)',
+        enabled: true
+      },
+      CIF: {
+        priceIDR: 265000,
+        priceUSD: 16.21,
+        description: 'Sewa Proyek Remote / Tambang Termasuk Asuransi Alat Berat & Mobilisasi Lowbed',
+        enabled: true
+      }
+    },
+    stock: 12,
+    unit: 'Jam',
+    origin: 'Workshop PT. CAFTHEN INDO PROJECT Jambi',
+    images: [
+      'https://images.unsplash.com/photo-1579451861283-a2239070aaa9?auto=format&fit=crop&w=800&q=80',
+      'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80'
+    ],
+    specs: [
+      'Tipe: Hydraulic Excavator 20 Ton (Bucket 0.93 - 1.0 m³)',
+      'Tahun Pembuatan: 2022 - 2024 (Unit Terawat & Siap Operasi 24 Jam)',
+      'Opsi Sewa: Lepas Kunci atau All In (Termasuk Operator Bersertifikat SIO + BBM)',
+      'Kondisi: Siap Kerja (Ready for Earthmoving, Mining, & Cut/Fill)',
+      'Mobilisasi: Tersedia Truk Lowbed Khusus Pengiriman Seluruh Sumatera'
+    ],
+    ecoretaxType: 'Include',
+    description: 'Penyediaan dan rental armada alat berat untuk mendukung percepatan proyek konstruksi, tambang batubara, dan pembukaan lahan industri.',
+    featured: false
+  }
+];
+
+export const INITIAL_USERS: UserProfile[] = [
+  {
+    id: 'CIP-USR-2026-0801',
+    username: 'pt_jaya_abadi',
+    password: 'password123',
+    fullName: 'Ir. Ahmad Zulkarnain',
+    companyName: 'PT. JAYA ABADI KONSTRUKSI NUSANTARA',
+    userType: 'Perusahaan',
+    email: 'procurement@jayaabadi.co.id',
+    whatsapp: '+6281278990011',
+    address: 'Jl. Sudirman No. 45, Kawasan Pergudangan Modern, Palembang - Sumatera Selatan',
+    photoUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+    ktpUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80',
+    npwpUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80',
+    comproUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=400&q=80',
+    status: 'Verified',
+    registeredAt: '2026-08-15 09:30 WIB'
+  },
+  {
+    id: 'CIP-USR-2026-0802',
+    username: 'budi_santoso',
+    password: 'password123',
+    fullName: 'Budi Santoso, S.T.',
+    companyName: 'CV. BINA CIPTA MANDIRI',
+    userType: 'Perorangan',
+    email: 'budisantoso.jambi@gmail.com',
+    whatsapp: '+6285266112233',
+    address: 'Jl. Pattimura Km 8, Kenali Besar, Kota Jambi',
+    photoUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=400&q=80',
+    ktpUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80',
+    npwpUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80',
+    status: 'Verified',
+    registeredAt: '2026-08-18 14:10 WIB'
+  },
+  {
+    id: 'CIP-USR-2026-0803',
+    username: 'mitra_andalas',
+    password: 'password123',
+    fullName: 'Hendra Gunawan',
+    companyName: 'PT. MITRA ANDALAS MINING & POWER',
+    userType: 'Perusahaan',
+    email: 'hendra.gunawan@mitraandalas.com',
+    whatsapp: '+6282188992200',
+    address: 'Jl. R. Soekamto No. 128, Ilir Timur II, Palembang',
+    photoUrl: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=400&q=80',
+    ktpUrl: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80',
+    npwpUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=400&q=80',
+    comproUrl: 'https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?auto=format&fit=crop&w=400&q=80',
+    status: 'Pending',
+    registeredAt: '2026-08-23 11:20 WIB'
+  }
+];
+
+export const INITIAL_ORDERS: Order[] = [
+  {
+    id: 'ORD-CIP-2026-8901',
+    buyerId: 'CIP-USR-2026-0801',
+    userId: 'CIP-USR-2026-0801',
+    buyerName: 'Ir. Ahmad Zulkarnain',
+    buyerCompany: 'PT. JAYA ABADI KONSTRUKSI NUSANTARA',
+    buyerEmail: 'procurement@jayaabadi.co.id',
+    buyerPhone: '+6281278990011',
+    productId: 'PROD-001',
+    productName: 'Batu Bara Curah Steam Coal (GAR 4200 - 5000 kcal/kg)',
+    productImage: 'https://images.unsplash.com/photo-1578575437130-527eed3abbec?auto=format&fit=crop&w=800&q=80',
+    quantity: 3000,
+    unit: 'Ton',
+    currency: 'IDR',
+    unitPrice: 980000,
+    totalPriceIDR: 3263400000, // include tax
+    totalPriceUSD: 200824.61,
+    purchasePattern: 'FOB',
+    destinationCoordinateLink: 'https://maps.google.com/?q=-1.589211,103.621455',
+    francoLocation: 'Pelabuhan Talang Duku Muaro Jambi',
+    francoCoordinateMapsUrl: 'https://maps.google.com/?q=-1.589211,103.621455',
+    shippingMethod: 'Tongkang',
+    taxSystem: {
+      type: 'Mandatory',
+      ppnRate: 0.11,
+      ppnAmount: 323400000,
+      pphAmount: 44100000
+    },
+    paymentScheme: 'Termin 50:40:10',
+    paymentMethod: '50:40:10',
+    paymentSchedule: [
+      {
+        id: 'ms-1',
+        name: 'DP Penandatanganan Kontrak',
+        percentage: 50,
+        amountIDR: 1631700000,
+        isPaid: true,
+        paidAt: '2026-08-16 10:15 WIB',
+        proofImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80'
+      },
+      {
+        id: 'ms-2',
+        name: 'Progres Pemuatan Tongkang',
+        percentage: 40,
+        amountIDR: 1305360000,
+        isPaid: true,
+        paidAt: '2026-08-20 15:30 WIB',
+        proofImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80'
+      },
+      {
+        id: 'ms-3',
+        name: 'Pelunasan Akhir di Pelabuhan',
+        percentage: 10,
+        amountIDR: 326340000,
+        isPaid: false
+      }
+    ],
+    paymentDetails: {
+      dpAmount: 1631700000,
+      progressAmount: 1305360000,
+      finalAmount: 326340000,
+      isPaid: false,
+      proofs: [
+        {
+          stage: 'DP (50%)',
+          amount: 1631700000,
+          receiptUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80',
+          uploadedAt: '2026-08-16 10:15 WIB',
+          bankName: 'Bank Mandiri',
+          senderAccount: 'PT. Jaya Abadi Konstruksi (Acc: 112-99-88001)',
+          status: 'Verified',
+          notes: 'Pembayaran DP 50% telah dicek dan masuk ke Rekening Mandiri PT. CAFTHEN INDO PROJECT.'
+        },
+        {
+          stage: 'Progres (40%)',
+          amount: 1305360000,
+          receiptUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80',
+          uploadedAt: '2026-08-20 15:30 WIB',
+          bankName: 'Bank Mandiri',
+          senderAccount: 'PT. Jaya Abadi Konstruksi',
+          status: 'Verified',
+          notes: 'Pembayaran tahap 2 progres pemuatan tongkang telah diverifikasi.'
+        }
+      ]
+    },
+    status: 'Dalam Pengiriman',
+    trackingNumber: 'CIP-LOG-TKG-3001',
+    currentLocation: 'Perairan Sungai Batanghari KM 42 Menuju Muara Sabak',
+    createdAt: '2026-08-15 11:00 WIB',
+    updatedAt: '2026-08-20 16:00 WIB',
+    adminNotes: 'Tongkang TB Marina 08 / BG Cindara 3001 sedang berlayar menuju pelabuhan bongkar.',
+    contract: {
+      contractNumber: 'CIP/SPJB/2026/VIII/0089',
+      createdAt: '2026-08-15 11:00 WIB',
+      firstParty: {
+        company: 'PT. CAFTHEN INDO PROJECT',
+        director: 'MASITHA.SH',
+        owner: 'HENDRI PUTRA.S.Kom',
+        address: 'Jl. Lintas Jambi Bulian Kota Kampus III, Mendalo Indah, Muaro Jambi',
+        phone: '+62831-49090950',
+        email: 'cafthen@gmail.com',
+        qrSignature: 'CIP-SEAL-VERIFIED-2026-MASITHA-HENDRI'
+      },
+      secondParty: {
+        userId: 'CIP-USR-2026-0801',
+        name: 'Ir. Ahmad Zulkarnain',
+        userType: 'Perusahaan',
+        companyName: 'PT. JAYA ABADI KONSTRUKSI NUSANTARA',
+        idNumber: 'NPWP: 01.992.831.4-311.000',
+        address: 'Jl. Sudirman No. 45, Palembang',
+        phone: '+6281278990011',
+        email: 'procurement@jayaabadi.co.id',
+        signatureDataUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><path d="M 20 50 Q 60 20 100 40 T 180 30" stroke="%230b2545" stroke-width="3" fill="none"/></svg>',
+        signedAt: '2026-08-15 11:25 WIB'
+      },
+      orderDetails: {
+        productId: 'PROD-001',
+        productName: 'Batu Bara Curah Steam Coal (GAR 4200 - 5000 kcal/kg)',
+        quantity: 3000,
+        unit: 'Ton',
+        unitPriceIDR: 980000,
+        unitPriceUSD: 60.30,
+        subtotalIDR: 2940000000,
+        taxAmountIDR: 323400000,
+        taxType: 'PPN ECoretax 11% (Mandatory Jalur Air)',
+        shippingCostIDR: 0,
+        totalAmountIDR: 3263400000,
+        totalAmountUSD: 200824.61,
+        purchasePattern: 'FOB',
+        shippingMethod: 'Tongkang',
+        paymentMethod: '50:40:10'
+      },
+      articles: [
+        {
+          title: 'PASAL 1 : KETENTUAN UMUM & OBJEK TRANSAKSI',
+          content: 'PIHAK PERTAMA (PT. CAFTHEN INDO PROJECT) setuju untuk menjual dan menyerahkan, serta PIHAK KEDUA setuju untuk membeli dan menerima komoditas Batu Bara Curah GAR 4200-5000 sebanyak 3.000 Ton dengan spesifikasi teknis dan standar legalitas yang sah sesuai ketentuan perundang-undangan.'
+        },
+        {
+          title: 'PASAL 2 : NILAI KONTRAK & SISTEM PERPAJAKAN (ECORETAX)',
+          content: 'Total nilai transaksi adalah sebesar Rp 3.263.400.000,- (Tiga Miliar Dua Ratus Enam Puluh Tiga Juta Empat Ratus Ribu Rupiah) sudah termasuk PPN 11% sesuai ketentuan ECoretax DJP karena pengiriman dilakukan melalui jalur perairan/tongkang.'
+        },
+        {
+          title: 'PASAL 3 : SKEMA PEMBAYARAN BERTAHAP (50:40:10)',
+          content: 'Pembayaran dilakukan dengan rincian: 50% (Rp 1.631.700.000) saat penandatanganan kontrak dan penerbitan PO; 40% (Rp 1.305.360.000) saat pemuatan tongkang dan penerbitan Surat Jalan/Draft Survey; 10% (Rp 326.340.000) saat tongkang tiba di pelabuhan tujuan/suplayer.'
+        },
+        {
+          title: 'PASAL 4 : PENYERAHAN & LOGISTIK POLA FOB TONGKANG',
+          content: 'Penyerahan komoditas dilakukan dengan pola FOB Tongkang di dermaga pemuatan Sungai Batanghari Jambi. Tanggung jawab risiko pengapalan beralih setelah komoditas selesai dimuat ke atas tongkang yang ditunjuk.'
+        },
+        {
+          title: 'PASAL 5 : KEADAAN KAHAR (FORCE MAJEURE) & PENYELESAIAN SENGKETA',
+          content: 'Segala perselisihan yang timbul akan diselesaikan secara musyawarah mufakat. Apabila tidak tercapai mufakat, para pihak sepakat memilih domisili hukum di Pengadilan Negeri Jambi.'
+        }
+      ],
+      isSignedByBuyer: true
+    }
+  },
+  {
+    id: 'ORD-CIP-2026-8902',
+    buyerId: 'CIP-USR-2026-0802',
+    userId: 'CIP-USR-2026-0802',
+    buyerName: 'Budi Santoso, S.T.',
+    buyerCompany: 'CV. BINA CIPTA MANDIRI',
+    buyerEmail: 'budisantoso.jambi@gmail.com',
+    buyerPhone: '+6285266112233',
+    productId: 'PROD-002',
+    productName: 'Besi Beton Ulir & Polos Standar SNI 2052:2017 (Diameter 8mm - 32mm)',
+    productImage: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
+    quantity: 15000,
+    unit: 'Kg',
+    currency: 'IDR',
+    unitPrice: 12500,
+    totalPriceIDR: 208125000,
+    totalPriceUSD: 12807.69,
+    purchasePattern: 'Franco',
+    destinationCoordinateLink: 'https://maps.google.com/?q=-1.619022,103.528901',
+    francoLocation: 'Proyek Jembatan Batanghari III, Mendalo',
+    francoCoordinateMapsUrl: 'https://maps.google.com/?q=-1.619022,103.528901',
+    shippingMethod: 'Trucking',
+    taxSystem: {
+      type: 'Include',
+      ppnRate: 0.11,
+      ppnAmount: 20625000,
+      pphAmount: 0
+    },
+    paymentScheme: 'Termin 50:50',
+    paymentMethod: '50:50',
+    paymentSchedule: [
+      {
+        id: 'ms-201',
+        name: 'DP 50% Saat Penandatanganan Kontrak',
+        percentage: 50,
+        amountIDR: 104062500,
+        isPaid: true,
+        paidAt: '2026-08-19 13:40 WIB',
+        proofImageUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80'
+      },
+      {
+        id: 'ms-202',
+        name: 'Pelunasan 50% Saat Tiba di Lokasi Proyek',
+        percentage: 50,
+        amountIDR: 104062500,
+        isPaid: false
+      }
+    ],
+    paymentDetails: {
+      dpAmount: 104062500,
+      finalAmount: 104062500,
+      isPaid: false,
+      proofs: [
+        {
+          stage: 'DP (50%)',
+          amount: 104062500,
+          receiptUrl: 'https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?auto=format&fit=crop&w=600&q=80',
+          uploadedAt: '2026-08-19 13:40 WIB',
+          bankName: 'Bank Central Asia (BCA)',
+          senderAccount: 'Budi Santoso (Acc: 890-1123-44)',
+          status: 'Verified',
+          notes: 'DP 50% diverifikasi, armada truk tronton siap diberangkatkan.'
+        }
+      ]
+    },
+    status: 'Pemuatan Barang (Loading)',
+    trackingNumber: 'CIP-TRK-JAMBI-098',
+    currentLocation: 'Gudang Logistik Mendalo Indah Jambi',
+    createdAt: '2026-08-19 11:20 WIB',
+    updatedAt: '2026-08-21 09:00 WIB',
+    adminNotes: 'Pemuatan besi beton SNI 15 Ton ke armada Tronton BH 8920 AU.',
+    contract: {
+      contractNumber: 'CIP/SPJB/2026/VIII/0092',
+      createdAt: '2026-08-19 11:20 WIB',
+      firstParty: {
+        company: 'PT. CAFTHEN INDO PROJECT',
+        director: 'MASITHA.SH',
+        owner: 'HENDRI PUTRA.S.Kom',
+        address: 'Jl. Lintas Jambi Bulian Kota Kampus III, Mendalo Indah, Muaro Jambi',
+        phone: '+62831-49090950',
+        email: 'cafthen@gmail.com',
+        qrSignature: 'CIP-SEAL-VERIFIED-2026-MASITHA-HENDRI'
+      },
+      secondParty: {
+        userId: 'CIP-USR-2026-0802',
+        name: 'Budi Santoso, S.T.',
+        userType: 'Perorangan',
+        companyName: 'CV. BINA CIPTA MANDIRI',
+        idNumber: 'KTP: 1571021908850003',
+        address: 'Jl. Pattimura Km 8, Kenali Besar, Kota Jambi',
+        phone: '+6285266112233',
+        email: 'budisantoso.jambi@gmail.com',
+        signatureDataUrl: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="80"><path d="M 30 40 C 70 10 90 60 140 30" stroke="%230b2545" stroke-width="3" fill="none"/></svg>',
+        signedAt: '2026-08-19 11:45 WIB'
+      },
+      orderDetails: {
+        productId: 'PROD-002',
+        productName: 'Besi Beton Ulir & Polos Standar SNI 2052:2017 (Diameter 8mm - 32mm)',
+        quantity: 15000,
+        unit: 'Kg',
+        unitPriceIDR: 12500,
+        unitPriceUSD: 0.77,
+        subtotalIDR: 187500000,
+        taxAmountIDR: 20625000,
+        taxType: 'Include PPN 11% (Jalur Darat)',
+        shippingCostIDR: 0,
+        totalAmountIDR: 208125000,
+        totalAmountUSD: 12807.69,
+        purchasePattern: 'Franco',
+        destinationCoordinateLink: 'https://maps.google.com/?q=-1.619022,103.528901',
+        shippingMethod: 'Trucking',
+        paymentMethod: '50:50'
+      },
+      articles: [
+        {
+          title: 'PASAL 1 : OBJEK TRANSAKSI DAN SPESIFIKASI',
+          content: 'PIHAK PERTAMA menyerahkan Besi Beton Standar SNI 2052:2017 sejumlah 15.000 Kg kepada PIHAK KEDUA dalam kondisi baru, lurus, dan bebas karat parah.'
+        },
+        {
+          title: 'PASAL 2 : HARGA DAN PEMBAYARAN SKEMA 50:50',
+          content: 'Total harga sebesar Rp 208.125.000,- dibayarkan dengan skema 50% di muka (Rp 104.062.500) dan 50% sisanya setelah barang tiba dan diperiksa di lokasi proyek.'
+        },
+        {
+          title: 'PASAL 3 : TITIK KOORDINAT TUJUAN PENGIRIMAN (FRANCO)',
+          content: 'Pengiriman dilakukan langsung oleh armada PT. CAFTHEN INDO PROJECT menuju titik koordinat tujuan yang telah diverifikasi: https://maps.google.com/?q=-1.619022,103.528901.'
+        }
+      ],
+      isSignedByBuyer: true
+    }
+  }
+];
+
+export const INITIAL_EXPENSES: ExpenseRecord[] = [
+  {
+    id: 'EXP-001',
+    title: 'Biaya Sandar & Keagenan Kapal Tongkang TB Marina 08',
+    category: 'Logistik & Armada',
+    amount: 35000000,
+    sourceOfFunds: 'Modal Operasional',
+    date: '2026-08-16',
+    description: 'Pembayaran jasa pandu, keagenan pelabuhan, dan tambat sandar pengapalan batubara Jambi.',
+    receiptNumber: 'REC-PORT-2026-091'
+  },
+  {
+    id: 'EXP-002',
+    title: 'Pembelian Bahan Bakar Solar Industri Truk Tronton Pengiriman Besi',
+    category: 'Logistik & Armada',
+    amount: 18500000,
+    sourceOfFunds: 'Kas Proyek',
+    date: '2026-08-18',
+    description: 'BBM solar industri non-subsidi untuk 4 unit dump truck armada Mendalo.',
+    receiptNumber: 'REC-BBM-8821'
+  },
+  {
+    id: 'EXP-003',
+    title: 'Gaji Tenaga Ahli K3 & Surveyor Independen Mutu Lapangan',
+    category: 'Gaji & Tenaga Ahli',
+    amount: 28000000,
+    sourceOfFunds: 'Keuntungan Bersih',
+    date: '2026-08-20',
+    description: 'Honorarium tim pengawas mutu civil engineering & sertifikasi inspeksi.',
+    receiptNumber: 'REC-HON-049'
+  },
+  {
+    id: 'EXP-004',
+    title: 'Penyetoran PPN ECoretax Masa Agustus 2026',
+    category: 'Perpajakan',
+    amount: 52000000,
+    sourceOfFunds: 'Modal Operasional',
+    date: '2026-08-22',
+    description: 'Setoran PPN Keluaran masa berjalan melalui billing DJP ECoretax.',
+    receiptNumber: 'NTPN-884019283719'
+  }
+];
+
+export const INITIAL_MESSAGES: ChatMessage[] = [
+  {
+    id: 'msg-1',
+    senderId: 'CIP-USR-2026-0801',
+    senderName: 'Ir. Ahmad Zulkarnain (PT. JAYA ABADI)',
+    receiverId: 'admin',
+    text: 'Selamat pagi Admin PT. CAFTHEN INDO PROJECT, mohon update status tongkang 300ft batubara kami apakah sudah memasuki jalur Muara Sabak?',
+    timestamp: '2026-08-21 08:30 WIB',
+    isAdmin: false,
+    orderId: 'ORD-CIP-2026-8901'
+  },
+  {
+    id: 'msg-2',
+    senderId: 'admin',
+    senderName: 'Admin PT. CAFTHEN INDO PROJECT',
+    receiverId: 'CIP-USR-2026-0801',
+    text: 'Selamat pagi Pak Ahmad. Benar Pak, saat ini TB Marina 08 posisi di koordinat KM 42 Batanghari. Estimasi sandar di transhipment point sore ini. Dokumen B/L dan draft survey sudah kami lampirkan di dashboard.',
+    timestamp: '2026-08-21 08:35 WIB',
+    isAdmin: true,
+    orderId: 'ORD-CIP-2026-8901'
+  },
+  {
+    id: 'msg-3',
+    senderId: 'CIP-USR-2026-0802',
+    senderName: 'Budi Santoso, S.T.',
+    receiverId: 'admin',
+    text: 'Halo Bu Masitha / Pak Hendri, kami sudah upload bukti transfer DP 50% untuk pesanan besi beton ulir 15 Ton. Mohon verifikasinya ya.',
+    timestamp: '2026-08-19 13:45 WIB',
+    isAdmin: false,
+    orderId: 'ORD-CIP-2026-8902'
+  },
+  {
+    id: 'msg-4',
+    senderId: 'admin',
+    senderName: 'Admin PT. CAFTHEN INDO PROJECT',
+    receiverId: 'CIP-USR-2026-0802',
+    text: 'Terima kasih Pak Budi. Bukti transfer DP sudah diverifikasi oleh finance kami. Armada truk tronton sedang proses muat dan akan berangkat sesuai link koordinat proyek bapak.',
+    timestamp: '2026-08-19 14:00 WIB',
+    isAdmin: true,
+    orderId: 'ORD-CIP-2026-8902'
+  }
+];
+
+export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
+  {
+    id: 'notif-1',
+    userId: 'CIP-USR-2026-0801',
+    title: 'Progres Pengiriman Diperbarui',
+    message: 'Pesanan Batu Bara 3.000 Ton (ORD-CIP-2026-8901) sedang dalam pelayaran tongkang di Sungai Batanghari.',
+    timestamp: '2026-08-20 16:00 WIB',
+    read: false,
+    type: 'order'
+  },
+  {
+    id: 'notif-2',
+    userId: 'CIP-USR-2026-0801',
+    title: 'Pembayaran DP 50% & Progres 40% Terverifikasi',
+    message: 'Finance PT. CAFTHEN INDO PROJECT telah menyetujui bukti pembayaran tahap 1 dan 2.',
+    timestamp: '2026-08-20 15:45 WIB',
+    read: true,
+    type: 'payment'
+  },
+  {
+    id: 'notif-3',
+    userId: 'CIP-USR-2026-0802',
+    title: 'Kontrak Digital Diterbitkan & Ditandatangani',
+    message: 'Surat Perjanjian Jual Beli CIP/SPJB/2026/VIII/0092 telah resmi disahkan dengan QR Seal Direksi.',
+    timestamp: '2026-08-19 11:45 WIB',
+    read: true,
+    type: 'contract'
+  }
+];

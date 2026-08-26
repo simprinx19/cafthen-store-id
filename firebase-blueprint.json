@@ -1,0 +1,65 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "User profile data for buyers and clients",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "username": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "whatsapp": { "type": "string" },
+        "address": { "type": "string" },
+        "userType": { "type": "string" },
+        "status": { "type": "string" },
+        "registeredAt": { "type": "string" }
+      },
+      "required": ["id", "username", "fullName", "email", "status"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Purchase order and contract record",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "userId": { "type": "string" },
+        "buyerName": { "type": "string" },
+        "buyerEmail": { "type": "string" },
+        "productName": { "type": "string" },
+        "quantity": { "type": "number" },
+        "totalPriceIDR": { "type": "number" },
+        "status": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["id", "userId", "buyerName", "productName", "quantity", "totalPriceIDR", "status"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Catalog item",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "priceIDR": { "type": "number" },
+        "stock": { "type": "number" }
+      },
+      "required": ["id", "name", "category", "priceIDR"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User profile documents"
+    },
+    "/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Order records"
+    },
+    "/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Product catalog items"
+    }
+  }
+}

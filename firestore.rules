@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Global default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == "simprinx19@gmail.com" ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['id', 'username', 'fullName', 'email', 'status']) &&
+        data.id is string && data.id.size() <= 64 &&
+        data.username is string && data.username.size() <= 64 &&
+        data.fullName is string && data.fullName.size() <= 120 &&
+        data.email is string && data.email.size() <= 120 &&
+        data.status is string;
+    }
+
+    function isValidOrder(data) {
+      return data.keys().hasAll(['id', 'userId', 'buyerName', 'productName', 'quantity', 'totalPriceIDR', 'status']) &&
+        data.id is string && data.id.size() <= 64 &&
+        data.userId is string && data.userId.size() <= 64 &&
+        data.buyerName is string && data.buyerName.size() <= 120 &&
+        data.productName is string && data.productName.size() <= 150 &&
+        data.quantity is number && data.quantity > 0 &&
+        data.totalPriceIDR is number && data.totalPriceIDR >= 0 &&
+        data.status is string;
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['id', 'name', 'category', 'priceIDR']) &&
+        data.id is string && data.id.size() <= 64 &&
+        data.name is string && data.name.size() <= 150 &&
+        data.category is string &&
+        data.priceIDR is number && data.priceIDR >= 0;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+      allow list: if isSignedIn() && (resource.data.id == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && incoming().id == userId;
+      allow update: if isSignedIn() && isValidId(userId) && isValidUser(incoming()) && (
+        request.auth.uid == userId || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Orders Collection
+    match /orders/{orderId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && isValidId(orderId) && isValidOrder(incoming()) && (
+        incoming().userId == request.auth.uid || isAdmin()
+      );
+      allow update: if isSignedIn() && isValidId(orderId) && isValidOrder(incoming()) && (
+        resource.data.userId == request.auth.uid || isAdmin()
+      );
+      allow delete: if isAdmin();
+    }
+
+    // Products Collection (Public Read, Admin Write)
+    match /products/{productId} {
+      allow get, list: if true;
+      allow create, update: if isAdmin() && isValidId(productId) && isValidProduct(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Test Connection
+    match /test/connection {
+      allow read: if true;
+    }
+  }
+}

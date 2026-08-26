@@ -1,0 +1,130 @@
+@import "tailwindcss";
+
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm 12mm 15mm; /* Professional paper margins so text is never dempet/mepet to paper edges */
+  }
+  
+  *, *::before, *::after {
+    box-sizing: border-box !important;
+  }
+
+  /* Hide everything in the DOM by default when printing */
+  body * {
+    visibility: hidden !important;
+  }
+
+  /* Make print contract wrapper and user profile wrapper visible */
+  .print-contract-wrapper,
+  .print-contract-wrapper *,
+  .print-user-profile-wrapper,
+  .print-user-profile-wrapper * {
+    visibility: visible !important;
+  }
+
+  /* Force hide UI bars, header, buttons, modal overlays, navbars */
+  .print\:hidden,
+  .print-hidden,
+  header,
+  nav,
+  footer,
+  aside,
+  button {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    font-size: 10pt !important;
+  }
+
+  /* Reset modal & container to sit cleanly at top-left of print sheet */
+  .print-contract-wrapper,
+  .print-user-profile-wrapper {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+    z-index: 99999 !important;
+  }
+
+  .print-contract-modal {
+    position: static !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+  }
+
+  .print-contract-content {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #ffffff !important;
+  }
+
+  .print-page {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    min-height: 250mm !important;
+    max-height: 262mm !important;
+    height: 255mm !important;
+    box-sizing: border-box !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+    padding: 3mm 2mm !important; /* Balanced inner padding */
+    background: #ffffff !important;
+    overflow: hidden !important;
+    page-break-before: always !important;
+    break-before: page !important;
+    page-break-after: always !important;
+    break-after: page !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-page:first-child {
+    page-break-before: auto !important;
+    break-before: auto !important;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
+
+  .print-avoid-break {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+}
