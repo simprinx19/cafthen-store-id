@@ -12,9 +12,34 @@ const __dirname = path.dirname(__filename);
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
-if (!fs.existsSync(DATA_FILE)) {
-  const initialData = {};
-  fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2), 'utf-8');
+// In-Memory & Safe File Caching for Read-Only Environments (Vercel Serverless)
+let inMemoryCache: Record<string, any> = {};
+
+function safeWriteLocalCache(data: Record<string, any>) {
+  inMemoryCache = { ...inMemoryCache, ...data };
+  try {
+    const targetFile = process.env.VERCEL ? path.join('/tmp', 'data.json') : DATA_FILE;
+    fs.writeFileSync(targetFile, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    // Ignore read-only filesystem errors; MongoDB is primary persistent storage
+  }
+}
+
+function safeReadLocalCache(): Record<string, any> {
+  try {
+    const targetFile = process.env.VERCEL ? path.join('/tmp', 'data.json') : DATA_FILE;
+    if (fs.existsSync(targetFile)) {
+      const raw = fs.readFileSync(targetFile, 'utf-8');
+      return JSON.parse(raw || '{}');
+    }
+    if (fs.existsSync(DATA_FILE)) {
+      const raw = fs.readFileSync(DATA_FILE, 'utf-8');
+      return JSON.parse(raw || '{}');
+    }
+  } catch (err) {
+    // Fallback to in-memory cache
+  }
+  return inMemoryCache;
 }
 
 // MongoDB Atlas Configuration
@@ -26,7 +51,7 @@ const DB_NAME = "db-compro";
 const COLLECTION_NAME = "app_storage";
 
 let cachedDb: Db | null = null;
-let mongoClient: MongoClient | null = null;
+let mongoClientPromise: Promise<MongoClient> | null = null;
 
 // Complete map of all expected application keys with their default mock data fallbacks
 const INITIAL_VALUES_MAP: Record<string, any> = {
@@ -40,6 +65,7 @@ const INITIAL_VALUES_MAP: Record<string, any> = {
   cafthen_messages: mockData.INITIAL_MESSAGES,
   cafthen_notifications: mockData.INITIAL_NOTIFICATIONS,
   cafthen_payment_settings: mockData.INITIAL_PAYMENT_SETTINGS,
+  cafthen_theme_settings: mockData.INITIAL_THEME_SETTINGS,
   cafthen_exchange_rate: 17685,
   cafthen_admin_logged_in: false,
 };
@@ -47,37 +73,16 @@ const INITIAL_VALUES_MAP: Record<string, any> = {
 async function migrateLocalDataToMongoDB(db: Db) {
   try {
     const collection = db.collection(COLLECTION_NAME);
-    
-    // 1. Read existing local data.json file
-    let localData: Record<string, any> = {};
-    if (fs.existsSync(DATA_FILE)) {
-      try {
-        const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-        localData = JSON.parse(raw || '{}');
-      } catch (e) {
-        localData = {};
-      }
-    }
+    const localData = safeReadLocalCache();
 
-    console.log(`[MongoDB] Synchronizing database "${DB_NAME}" keys and ensuring all initial values are fully seeded...`);
+    console.log(`[MongoDB] Verifying database "${DB_NAME}" collection "${COLLECTION_NAME}" records...`);
     let seedCount = 0;
-    let localSyncCount = 0;
 
-    // 2. Iterate through all required keys to ensure they exist both in MongoDB and local cache
     for (const [key, defaultValue] of Object.entries(INITIAL_VALUES_MAP)) {
       const existsInDb = await collection.findOne({ key });
       
-      if (existsInDb) {
-        // Key exists in MongoDB - ensure local cache has it and matches it
-        const dbValueStr = JSON.stringify(existsInDb.value);
-        const localValueStr = JSON.stringify(localData[key]);
-        if (localData[key] === undefined || localValueStr !== dbValueStr) {
-          localData[key] = existsInDb.value;
-          localSyncCount++;
-        }
-      } else {
-        // Key is missing from MongoDB - we must seed/migrate it!
-        // We prefer local file cache value if present, otherwise we fallback to the default mock data
+      if (!existsInDb) {
+        // Key is missing from MongoDB - seed it immediately
         const valueToSave = localData[key] !== undefined ? localData[key] : defaultValue;
         
         await collection.updateOne(
@@ -88,19 +93,20 @@ async function migrateLocalDataToMongoDB(db: Db) {
         
         localData[key] = valueToSave;
         seedCount++;
+      } else {
+        localData[key] = existsInDb.value;
       }
     }
 
-    // 3. Save the fully updated cache back to local file
-    fs.writeFileSync(DATA_FILE, JSON.stringify(localData, null, 2), 'utf-8');
+    safeWriteLocalCache(localData);
 
-    if (seedCount > 0 || localSyncCount > 0) {
-      console.log(`[MongoDB] Sync complete: seeded ${seedCount} missing keys to DB, updated ${localSyncCount} keys in local data.json.`);
+    if (seedCount > 0) {
+      console.log(`[MongoDB] Initialized & seeded ${seedCount} missing keys into MongoDB Atlas "${DB_NAME}".`);
     } else {
-      console.log("[MongoDB] All keys are already fully synchronized and up to date in MongoDB.");
+      console.log(`[MongoDB] All data keys are fully populated in MongoDB Atlas "${DB_NAME}".`);
     }
   } catch (error) {
-    console.error("[MongoDB] Failed during database seeding & sync:", error);
+    console.error("[MongoDB] Seeding notice:", error);
   }
 }
 
@@ -111,23 +117,32 @@ async function getMongoDB(): Promise<Db | null> {
     return null;
   }
   try {
-    if (!mongoClient) {
-      console.log(`[MongoDB] Initializing connection to MongoDB database: ${DB_NAME}...`);
-      mongoClient = new MongoClient(MONGODB_URI, {
-        serverSelectionTimeoutMS: 15000, // 15 seconds timeout
-        connectTimeoutMS: 15000,
+    if (!mongoClientPromise) {
+      console.log(`[MongoDB] Connecting to MongoDB Atlas cluster (Database: ${DB_NAME})...`);
+      const client = new MongoClient(MONGODB_URI, {
+        serverSelectionTimeoutMS: 10000,
+        connectTimeoutMS: 10000,
+        maxPoolSize: 10,
+        minPoolSize: 1,
+        retryWrites: true,
       });
-      await mongoClient.connect();
-      console.log(`[MongoDB] Successfully connected to MongoDB database: ${DB_NAME}`);
-      const db = mongoClient.db(DB_NAME);
-      await migrateLocalDataToMongoDB(db);
+      mongoClientPromise = client.connect();
     }
-    cachedDb = mongoClient.db(DB_NAME);
+    
+    const client = await mongoClientPromise;
+    const db = client.db(DB_NAME);
+    cachedDb = db;
+    
+    // Seed initial keys in background if needed
+    migrateLocalDataToMongoDB(db).catch(err => {
+      console.warn("[MongoDB] Initial sync background task:", err);
+    });
+
     return cachedDb;
-  } catch (err) {
-    console.error("[MongoDB] Database connection failed (will retry on next request):", (err as Error)?.message || err);
+  } catch (err: any) {
+    console.error("[MongoDB] Connection failed:", err?.message || err);
     cachedDb = null;
-    mongoClient = null; // Reset client on failure so that subsequent calls can retry
+    mongoClientPromise = null;
     return null;
   }
 }
@@ -135,24 +150,41 @@ async function getMongoDB(): Promise<Db | null> {
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-app.use(express.json({ limit: '15mb' }));
+// Enable CORS for all origins & client devices
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+app.use(express.json({ limit: '25mb' }));
+app.use(express.urlencoded({ extended: true, limit: '25mb' }));
 
 // API Routes for Cross-Device Data Synchronization & MongoDB Atlas Persistence
 app.get("/api/health", async (req, res) => {
   let dbStatus = "disconnected";
-  const db = await getMongoDB();
-  if (db) {
-    try {
+  let docsCount = 0;
+  try {
+    const db = await getMongoDB();
+    if (db) {
       await db.command({ ping: 1 });
       dbStatus = `connected (${DB_NAME})`;
-    } catch (e) {
-      dbStatus = "ping failed";
+      docsCount = await db.collection(COLLECTION_NAME).countDocuments();
     }
+  } catch (e: any) {
+    dbStatus = `error: ${e?.message || 'ping failed'}`;
   }
+
   res.json({ 
     status: "ok", 
     timestamp: new Date().toISOString(), 
     database: `MongoDB Atlas (${DB_NAME})`,
+    collection: COLLECTION_NAME,
+    documentsCount: docsCount,
     dbStatus 
   });
 });
@@ -162,7 +194,7 @@ app.get("/api/data", async (req, res) => {
   try {
     let result: Record<string, any> = {};
 
-    // 1. Fetch all keys from MongoDB
+    // 1. Fetch all keys from MongoDB Atlas
     const db = await getMongoDB();
     if (db) {
       const collection = db.collection(COLLECTION_NAME);
@@ -175,45 +207,42 @@ app.get("/api/data", async (req, res) => {
         });
       }
     } else {
-      // Fallback to local cache only if MongoDB is offline
-      if (fs.existsSync(DATA_FILE)) {
-        try {
-          const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-          result = JSON.parse(raw || '{}');
-        } catch (e) {
-          result = {};
-        }
-      }
+      // Fallback to local/in-memory cache only if MongoDB is offline
+      result = safeReadLocalCache();
     }
 
     // 2. Ensure all expected application keys are present by filling in any missing keys with defaults
-    let updatedLocalCache = false;
+    let missingKeysToSeed: Record<string, any> = {};
     for (const [key, defaultValue] of Object.entries(INITIAL_VALUES_MAP)) {
       if (result[key] === undefined) {
         result[key] = defaultValue;
-        updatedLocalCache = true;
+        missingKeysToSeed[key] = defaultValue;
       }
     }
 
-    // 3. Keep local data.json synchronized as a persistent backup baseline
-    if (updatedLocalCache || !fs.existsSync(DATA_FILE)) {
-      try {
-        fs.writeFileSync(DATA_FILE, JSON.stringify(result, null, 2), 'utf-8');
-      } catch (e) {
-        console.error("Failed to write baseline to DATA_FILE:", e);
-      }
+    // 3. If missing keys were found, seed them to MongoDB in background
+    if (db && Object.keys(missingKeysToSeed).length > 0) {
+      const collection = db.collection(COLLECTION_NAME);
+      const bulkOps = Object.entries(missingKeysToSeed).map(([k, v]) => ({
+        updateOne: {
+          filter: { key: k },
+          update: { $set: { key: k, value: v, updatedAt: new Date() } },
+          upsert: true
+        }
+      }));
+      collection.bulkWrite(bulkOps).catch(err => {
+        console.warn("[MongoDB] Background seeding error:", err);
+      });
     }
+
+    // 4. Update local safe cache
+    safeWriteLocalCache(result);
 
     res.json(result);
-  } catch (err) {
+  } catch (err: any) {
     console.error("Error reading data:", err);
-    try {
-      if (fs.existsSync(DATA_FILE)) {
-        const raw = fs.readFileSync(DATA_FILE, 'utf-8');
-        return res.json(JSON.parse(raw || '{}'));
-      }
-    } catch (e) {}
-    res.status(500).json({ error: "Failed to read data" });
+    const fallback = safeReadLocalCache();
+    res.json(fallback);
   }
 });
 
@@ -221,15 +250,7 @@ app.get("/api/data", async (req, res) => {
 app.post("/api/data", async (req, res) => {
   try {
     const { key, value } = req.body;
-    let localData: Record<string, any> = {};
-
-    if (fs.existsSync(DATA_FILE)) {
-      try {
-        localData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8') || '{}');
-      } catch (e) {
-        localData = {};
-      }
-    }
+    let localData = safeReadLocalCache();
 
     if (key) {
       localData[key] = value;
@@ -237,10 +258,11 @@ app.post("/api/data", async (req, res) => {
       localData = { ...localData, ...req.body };
     }
 
-    // Update local file cache
-    fs.writeFileSync(DATA_FILE, JSON.stringify(localData, null, 2), 'utf-8');
+    // Save to local safe cache immediately
+    safeWriteLocalCache(localData);
 
-    // Save to MongoDB Atlas if connected
+    // Save to MongoDB Atlas collection
+    let savedToDb = false;
     const db = await getMongoDB();
     if (db) {
       const collection = db.collection(COLLECTION_NAME);
@@ -250,6 +272,7 @@ app.post("/api/data", async (req, res) => {
           { $set: { key, value, updatedAt: new Date() } },
           { upsert: true }
         );
+        savedToDb = true;
       } else if (req.body && typeof req.body === 'object') {
         const bulkOps = Object.entries(req.body).map(([k, v]) => ({
           updateOne: {
@@ -260,14 +283,15 @@ app.post("/api/data", async (req, res) => {
         }));
         if (bulkOps.length > 0) {
           await collection.bulkWrite(bulkOps);
+          savedToDb = true;
         }
       }
     }
 
-    res.json({ success: true, data: localData });
-  } catch (err) {
-    console.error("Error writing data:", err);
-    res.status(500).json({ error: "Failed to save data" });
+    res.json({ success: true, savedToDb, database: DB_NAME, data: localData });
+  } catch (err: any) {
+    console.error("Error writing data to MongoDB/Server:", err);
+    res.status(500).json({ error: "Failed to save data", details: err?.message || err });
   }
 });
 
@@ -286,7 +310,7 @@ if (fs.existsSync(distPath)) {
   });
 }
 
-// Start listening immediately
+// Start listening immediately if not in Vercel Serverless environment
 if (!process.env.VERCEL) {
   app.listen(PORT, "0.0.0.0", () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
@@ -306,3 +330,4 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 export default app;
+

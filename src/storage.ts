@@ -17,7 +17,8 @@ import {
   OrderStatus,
   PaymentSettingsState,
   PaymentMethodConfig,
-  BankAccount
+  BankAccount,
+  ThemeSettings
 } from './types';
 import {
   INITIAL_COMPANY_PROFILE,
@@ -29,7 +30,9 @@ import {
   INITIAL_EXPENSES,
   INITIAL_MESSAGES,
   INITIAL_NOTIFICATIONS,
-  INITIAL_PAYMENT_SETTINGS
+  INITIAL_PAYMENT_SETTINGS,
+  INITIAL_THEME_SETTINGS,
+  THEME_PRESET_CONFIGS
 } from './mockData';
 import { getProductPatternPrice, PURCHASE_PATTERNS_INFO } from './utils/pricing';
 import { generateDigitalContractDocument } from './utils/contractAiEngine';
@@ -47,7 +50,8 @@ const KEYS = {
   CURRENT_USER: 'cafthen_current_user',
   EXCHANGE_RATE: 'cafthen_exchange_rate',
   ADMIN_LOGGED_IN: 'cafthen_admin_logged_in',
-  PAYMENT_SETTINGS: 'cafthen_payment_settings'
+  PAYMENT_SETTINGS: 'cafthen_payment_settings',
+  THEME_SETTINGS: 'cafthen_theme_settings'
 };
 
 export const DEFAULT_EXCHANGE_RATE = 17685; // 1 USD = Rp 17.685 (Mengikuti Google Market Rate)
@@ -929,5 +933,27 @@ export const StorageService = {
       item.read = true;
       setStored(KEYS.NOTIFICATIONS, notifs);
     }
+  },
+
+  // Themes & Color Customizer
+  getThemeSettings(): ThemeSettings {
+    const stored = getStored<ThemeSettings>(KEYS.THEME_SETTINGS, INITIAL_THEME_SETTINGS);
+    return stored || INITIAL_THEME_SETTINGS;
+  },
+  saveThemeSettings(theme: ThemeSettings): void {
+    theme.updatedAt = new Date().toISOString();
+    setStored(KEYS.THEME_SETTINGS, theme);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cafthen_theme_updated', { detail: theme }));
+    }
+  },
+  resetThemeSettings(): ThemeSettings {
+    const defaultTheme = { ...INITIAL_THEME_SETTINGS, updatedAt: new Date().toISOString() };
+    setStored(KEYS.THEME_SETTINGS, defaultTheme);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('cafthen_theme_updated', { detail: defaultTheme }));
+    }
+    return defaultTheme;
   }
 };
+

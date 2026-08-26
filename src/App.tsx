@@ -16,6 +16,7 @@ import { UserDashboard } from './components/User/UserDashboard';
 import { AuthModal } from './components/Auth/AuthModal';
 import { StorageService } from './storage';
 import { ExchangeRateService } from './services/exchangeRateService';
+import { applyThemeToDOM } from './utils/themeEngine';
 import { 
   CompanyProfileData, 
   TeamMember, 
@@ -25,13 +26,17 @@ import {
   UserProfile, 
   FinancialReport, 
   ExpenseRecord, 
-  ChatMessage 
+  ChatMessage,
+  ThemeSettings 
 } from './types';
 import { CheckCircle2, Bell, X, ShieldAlert } from 'lucide-react';
 
 export default function App() {
   // Page Navigation: 'home' | 'admin' | 'user'
   const [currentPage, setCurrentPage] = useState<'home' | 'admin' | 'user'>('home');
+
+  // Theme Settings
+  const [theme, setTheme] = useState<ThemeSettings>(StorageService.getThemeSettings());
 
   // Application Data States
   const [company, setCompany] = useState<CompanyProfileData>(StorageService.getCompanyProfile());
@@ -59,6 +64,9 @@ export default function App() {
 
   // Sync data refresh helper
   const reloadData = () => {
+    const currentTheme = StorageService.getThemeSettings();
+    setTheme(currentTheme);
+    applyThemeToDOM(currentTheme);
     setCompany(StorageService.getCompanyProfile());
     setTeam(StorageService.getTeam());
     setActivities(StorageService.getActivities());
@@ -74,6 +82,7 @@ export default function App() {
   };
 
   useEffect(() => {
+    applyThemeToDOM(theme);
     reloadData();
     StorageService.syncWithServer();
 
@@ -84,6 +93,13 @@ export default function App() {
 
     const handleStorageUpdate = () => {
       reloadData();
+    };
+
+    const handleThemeUpdate = (e: any) => {
+      if (e.detail) {
+        setTheme(e.detail);
+        applyThemeToDOM(e.detail);
+      }
     };
 
     const handleRateUpdate = (e: any) => {
@@ -100,6 +116,7 @@ export default function App() {
     };
 
     window.addEventListener('cafthen_storage_updated', handleStorageUpdate);
+    window.addEventListener('cafthen_theme_updated', handleThemeUpdate);
     window.addEventListener('cafthen_exchange_rate_updated', handleRateUpdate);
     window.addEventListener('storage', handleStorageUpdate);
     window.addEventListener('focus', handleFocus);
@@ -107,6 +124,7 @@ export default function App() {
     return () => {
       clearInterval(syncInterval);
       window.removeEventListener('cafthen_storage_updated', handleStorageUpdate);
+      window.removeEventListener('cafthen_theme_updated', handleThemeUpdate);
       window.removeEventListener('cafthen_exchange_rate_updated', handleRateUpdate);
       window.removeEventListener('storage', handleStorageUpdate);
       window.removeEventListener('focus', handleFocus);

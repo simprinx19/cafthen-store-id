@@ -14,7 +14,8 @@ import {
   Lock,
   Sparkles,
   ChevronRight,
-  CreditCard
+  CreditCard,
+  Palette
 } from 'lucide-react';
 import { 
   CompanyProfileData, 
@@ -35,6 +36,7 @@ import { AdminProductManagement } from './AdminProductManagement';
 import { AdminFinance } from './AdminFinance';
 import { AdminChat } from './AdminChat';
 import { AdminPaymentMethods } from './AdminPaymentMethods';
+import { AdminThemeSettings } from './AdminThemeSettings';
 
 interface AdminDashboardProps {
   isAdminLoggedIn: boolean;
@@ -155,6 +157,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
   const navTabs = [
     { id: 'overview', label: 'Ikhtisar & Grafik Penjualan', icon: LayoutDashboard },
     { id: 'cms', label: 'CMS Tampilan Halaman Utama', icon: Settings },
+    { id: 'theme', label: 'Tema & Warna Tampilan', icon: Palette },
     { id: 'users', label: 'Verifikasi Akun Baru', icon: UserCheck, badge: users.filter((u) => u.status === 'Pending').length },
     { id: 'orders', label: 'Verifikasi Pesanan & Kontrak', icon: FileCheck2, badge: orders.filter((o) => o.status.includes('Menunggu')).length },
     { id: 'products', label: 'Kelola Produk & Komoditas', icon: Package },
@@ -253,6 +256,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
               company={company}
               team={team}
               activities={activities}
+              onDataUpdated={onDataUpdated}
+            />
+          )}
+
+          {currentTab === 'theme' && (
+            <AdminThemeSettings
               onDataUpdated={onDataUpdated}
             />
           )}

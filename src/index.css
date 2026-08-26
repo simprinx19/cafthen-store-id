@@ -1,5 +1,28 @@
 @import "tailwindcss";
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+:root {
+  --theme-primary: #f59e0b;
+  --theme-primary-hover: #d97706;
+  --theme-secondary: #0f172a;
+  --theme-accent: #fbbf24;
+  --theme-radius: 1rem;
+}
+
 @media print {
   @page {
     size: A4 portrait;

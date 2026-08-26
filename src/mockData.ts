@@ -8,7 +8,9 @@ import {
   ExpenseRecord,
   ChatMessage,
   NotificationItem,
-  PaymentSettingsState
+  PaymentSettingsState,
+  ThemeSettings,
+  ThemePreset
 } from './types';
 import { DEFAULT_CIP_LOGO } from './utils/logoPresets';
 
@@ -1081,3 +1083,104 @@ export const INITIAL_NOTIFICATIONS: NotificationItem[] = [
     type: 'contract'
   }
 ];
+
+export const THEME_PRESET_CONFIGS: Record<
+  ThemePreset,
+  {
+    name: string;
+    description: string;
+    primaryColor: string;
+    primaryHover: string;
+    secondaryColor: string;
+    accentColor: string;
+    badge: string;
+  }
+> = {
+  'gold-navy': {
+    name: 'Kuning Emas & Biru Maritim (Signature Cafthen)',
+    description: 'Aksen emas elegan berpadu dengan biru maritim gelap korporat resmi PT Cafthen Indo Project.',
+    primaryColor: '#f59e0b',
+    primaryHover: '#d97706',
+    secondaryColor: '#0f172a',
+    accentColor: '#fbbf24',
+    badge: 'DEFAULT RESMI'
+  },
+  'emerald-forest': {
+    name: 'Emerald Agro & Sawit Hijau',
+    description: 'Nuansa hijau emerald subur mencerminkan komoditas perkebunan, cangkang sawit, dan kelapa tua nusantara.',
+    primaryColor: '#10b981',
+    primaryHover: '#059669',
+    secondaryColor: '#064e3b',
+    accentColor: '#34d399',
+    badge: 'AGRO & ECO'
+  },
+  'ocean-sapphire': {
+    name: 'Samudra Sapphire & Maritim Ekspor',
+    description: 'Biru samudra dinamis melambangkan logistik pelayaran antar-pulau, armada tongkang, dan ekspor global.',
+    primaryColor: '#2563eb',
+    primaryHover: '#1d4ed8',
+    secondaryColor: '#0f172a',
+    accentColor: '#60a5fa',
+    badge: 'GLOBAL LOGISTICS'
+  },
+  'ruby-industrial': {
+    name: 'Ruby Merah Batok & Industri Tambang',
+    description: 'Merah ruby menyala dan tegas mencerminkan arang batok kelapa, energi batubara, dan konstruksi sipil berenergi tinggi.',
+    primaryColor: '#e11d48',
+    primaryHover: '#be123c',
+    secondaryColor: '#18181b',
+    accentColor: '#fb7185',
+    badge: 'ENERGY & MINING'
+  },
+  'bronze-luxury': {
+    name: 'Bronze & Charcoal Premium Enterprise',
+    description: 'Palet bronze tembaga mewah dan charcoal gelap untuk citra korporat eksklusif skala internasional.',
+    primaryColor: '#d97706',
+    primaryHover: '#b45309',
+    secondaryColor: '#1e293b',
+    accentColor: '#f59e0b',
+    badge: 'PREMIUM ENTERPRISE'
+  },
+  'violet-tech': {
+    name: 'Amethyst Modern & Violet Eksekutif',
+    description: 'Nuansa ungu violet futuristik dan teknologi digital modern untuk bisnis era baru terpercaya.',
+    primaryColor: '#8b5cf6',
+    primaryHover: '#7c3aed',
+    secondaryColor: '#0f172a',
+    accentColor: '#a78bfa',
+    badge: 'MODERN TECH'
+  },
+  'teal-cyan': {
+    name: 'Teal Coastal & Engineering Kontraktor',
+    description: 'Kombinasi biru kehijauan teal dan cyan profesional untuk proyek teknik sipil dan kontraktor pelabuhan.',
+    primaryColor: '#0d9488',
+    primaryHover: '#0f766e',
+    secondaryColor: '#042f2e',
+    accentColor: '#2dd4bf',
+    badge: 'CIVIL & CONTRACTOR'
+  },
+  'monochrome-slate': {
+    name: 'Monochrome Onyx & Platinum Minimalis',
+    description: 'Tampilan monokrom abu-abu platinum dan onyx hitam yang bersih, netral, dan sangat presisi.',
+    primaryColor: '#475569',
+    primaryHover: '#334155',
+    secondaryColor: '#09090b',
+    accentColor: '#94a3b8',
+    badge: 'MINIMALIST ONYX'
+  }
+};
+
+export const INITIAL_THEME_SETTINGS: ThemeSettings = {
+  preset: 'gold-navy',
+  themeName: 'Kuning Emas & Biru Maritim (Signature Cafthen)',
+  primaryColor: '#f59e0b',
+  primaryHover: '#d97706',
+  secondaryColor: '#0f172a',
+  accentColor: '#fbbf24',
+  dashboardTheme: 'dark-executive',
+  borderRadius: 'rounded-2xl',
+  fontFamily: 'sans',
+  enableGlowEffects: true,
+  updatedAt: new Date().toISOString()
+};
+

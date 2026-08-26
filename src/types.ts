@@ -348,3 +348,28 @@ export interface FinancialReport {
 }
 
 export type FinanceSummary = FinancialReport;
+
+export type ThemePreset =
+  | 'gold-navy'
+  | 'emerald-forest'
+  | 'ocean-sapphire'
+  | 'ruby-industrial'
+  | 'bronze-luxury'
+  | 'violet-tech'
+  | 'teal-cyan'
+  | 'monochrome-slate';
+
+export interface ThemeSettings {
+  preset: ThemePreset;
+  themeName: string;
+  primaryColor: string; // e.g. '#f59e0b' or '#10b981'
+  primaryHover: string; // e.g. '#d97706'
+  secondaryColor: string; // e.g. '#0f172a' (navy / dark slate)
+  accentColor: string; // e.g. '#fbbf24'
+  dashboardTheme: 'dark-executive' | 'light-modern' | 'navy-slate';
+  borderRadius: 'rounded-xl' | 'rounded-2xl' | 'rounded-3xl';
+  fontFamily: 'sans' | 'display' | 'mono';
+  enableGlowEffects: boolean;
+  updatedAt?: string;
+}
+
