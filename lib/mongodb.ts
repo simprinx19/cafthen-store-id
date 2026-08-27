@@ -16,44 +16,45 @@ export const COLLECTION_NAME = process.env.MONGODB_COLLECTION || process.env.COL
 
 const options: MongoClientOptions = {
   appName: "devrel.vercel.integration",
-  maxIdleTimeMS: 5000
+  maxIdleTimeMS: 5000,
+  serverSelectionTimeoutMS: 5000,
+  connectTimeoutMS: 10000,
 };
 
-let client: MongoClient;
-let clientPromise: Promise<MongoClient>;
+const globalWithMongo = global as typeof globalThis & {
+  _mongoClientPromise?: Promise<MongoClient>;
+  _mongoClient?: MongoClient;
+};
 
-if (process.env.NODE_ENV === 'development') {
-  const globalWithMongo = global as typeof globalThis & {
-    _mongoClientPromise?: Promise<MongoClient>;
-    _mongoClient?: MongoClient;
-  };
-
-  if (!globalWithMongo._mongoClientPromise) {
-    client = new MongoClient(uri, options);
-    try {
-      attachDatabasePool(client);
-    } catch {
-      // ignore if not running in vercel runtime
-    }
-    globalWithMongo._mongoClient = client;
-    globalWithMongo._mongoClientPromise = client.connect();
+function getClientPromise(): Promise<MongoClient> {
+  if (globalWithMongo._mongoClientPromise) {
+    return globalWithMongo._mongoClientPromise;
   }
-  client = globalWithMongo._mongoClient!;
-  clientPromise = globalWithMongo._mongoClientPromise;
-} else {
-  client = new MongoClient(uri, options);
+
+  const client = new MongoClient(uri, options);
   try {
-    attachDatabasePool(client);
+    if (typeof attachDatabasePool === 'function') {
+      attachDatabasePool(client);
+    }
   } catch {
     // ignore if not running in vercel runtime
   }
-  clientPromise = client.connect();
+
+  globalWithMongo._mongoClient = client;
+  globalWithMongo._mongoClientPromise = client.connect().catch((err) => {
+    // Clear cached promise on failure so subsequent invocations can retry fresh
+    globalWithMongo._mongoClientPromise = undefined;
+    throw err;
+  });
+
+  return globalWithMongo._mongoClientPromise;
 }
 
 export async function getDb(): Promise<Db> {
-  const connectedClient = await clientPromise;
+  const connectedClient = await getClientPromise();
   return connectedClient.db(DB_NAME);
 }
 
-export { client, clientPromise };
-export default client;
+export const clientPromise = getClientPromise();
+export default globalWithMongo._mongoClient || new MongoClient(uri, options);
+

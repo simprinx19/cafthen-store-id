@@ -130,8 +130,16 @@ async function getMongoDB(): Promise<Db | null> {
 const app = express();
 const PORT = Number(process.env.PORT) || 3000;
 
-// Enable CORS and disable all caching for real-time synchronization
+// Enable CORS, disable all caching, and normalize Vercel rewritten paths
 app.use((req, res, next) => {
+  // Normalize Vercel rewritten URLs
+  if (req.url.startsWith('/api/index.ts')) {
+    req.url = req.url.replace('/api/index.ts', '');
+    if (!req.url || req.url === '/') {
+      req.url = '/api/data';
+    }
+  }
+
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization, Cache-Control, Pragma, Expires");
@@ -405,14 +413,16 @@ app.use("/api/*", (req, res) => {
   res.status(404).json({ error: "API endpoint not found" });
 });
 
-// Static assets serving for production
-const distPath = path.join(process.cwd(), 'dist');
-if (fs.existsSync(distPath)) {
-  app.use(express.static(distPath));
-  app.get('*', (req, res, next) => {
-    if (req.path.startsWith('/api')) return next();
-    res.sendFile(path.join(distPath, 'index.html'));
-  });
+// Static assets serving for standalone production (non-Vercel)
+if (!process.env.VERCEL) {
+  const distPath = path.join(process.cwd(), 'dist');
+  if (fs.existsSync(distPath)) {
+    app.use(express.static(distPath));
+    app.get('*', (req, res, next) => {
+      if (req.path.startsWith('/api')) return next();
+      res.sendFile(path.join(distPath, 'index.html'));
+    });
+  }
 }
 
 // Start listening immediately if not in Vercel Serverless environment
