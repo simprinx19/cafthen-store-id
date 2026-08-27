@@ -153,10 +153,10 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
     };
     
     const payload = {
-      key: '_diag_atlas_ping',
+      key: '_diag_supabase_ping',
       value: {
         testedAt: new Date().toISOString(),
-        status: 'ATLAS_WRITE_VERIFIED',
+        status: 'SUPABASE_WRITE_VERIFIED',
         clientUserAgent: navigator.userAgent,
         testId: Math.random().toString(36).substring(2, 9)
       }
@@ -185,7 +185,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
 
       addLog({
         type: 'WRITE',
-        title: `Pemeriksaan Tulis MongoDB (_diag_atlas_ping)`,
+        title: `Pemeriksaan Tulis Supabase (_diag_supabase_ping)`,
         url,
         method: 'POST',
         requestHeaders: reqHeaders,
@@ -203,7 +203,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
       const latencyMs = Math.round(performance.now() - startTime);
       addLog({
         type: 'WRITE',
-        title: 'Gagal Menulis ke MongoDB (POST /api/data)',
+        title: 'Gagal Menulis ke Supabase db_cip (POST /api/data)',
         url,
         method: 'POST',
         requestHeaders: reqHeaders,
@@ -230,7 +230,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
       value: {
         nonce: testNonce,
         verifiedTimestamp: new Date().toISOString(),
-        message: 'Pengujian Tulis & Baca Instan MongoDB Atlas'
+        message: 'Pengujian Tulis & Baca Instan Supabase Database db_cip'
       }
     };
 
@@ -300,7 +300,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
     }
   };
 
-  // 4. Test MongoDB Atlas Low-Level Benchmark (/api/db-test)
+  // 4. Test Supabase Database Low-Level Benchmark (/api/db-test)
   const runBenchmarkTest = async () => {
     setIsExecuting(true);
     const startTime = performance.now();
@@ -322,7 +322,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
 
       addLog({
         type: 'BENCHMARK',
-        title: `Benchmark Latensi Atlas: Write ${resPayload.latency?.writeMs || 0}ms, Read ${resPayload.latency?.readMs || 0}ms`,
+        title: `Benchmark Latensi Supabase: Write ${resPayload.latency?.writeMs || 0}ms, Read ${resPayload.latency?.readMs || 0}ms`,
         url,
         method: 'POST',
         requestHeaders: { 'Content-Type': 'application/json' },
@@ -337,7 +337,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
       const latencyMs = Math.round(performance.now() - startTime);
       addLog({
         type: 'BENCHMARK',
-        title: 'Gagal Menjalankan Benchmark Atlas',
+        title: 'Gagal Menjalankan Benchmark Supabase',
         url,
         method: 'POST',
         status: 0,
@@ -388,7 +388,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
 
       addLog({
         type: 'CUSTOM',
-        title: `Kustom POST [${customKey}] ke MongoDB`,
+        title: `Kustom POST [${customKey}] ke Supabase`,
         url,
         method: 'POST',
         requestHeaders: { 'Content-Type': 'application/json' },
@@ -446,13 +446,13 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
               </div>
               <div>
                 <h3 className="text-lg font-black text-white flex items-center gap-2">
-                  Konsol Diagnostik MongoDB Atlas
+                  Konsol Diagnostik Supabase Database (db_cip)
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                     Live Inspector
                   </span>
                 </h3>
                 <p className="text-xs text-slate-400">
-                  Uji langsung operasi Tulis & Baca ke cloud MongoDB Atlas, pantau HTTP Status Code, Header Respon, serta isi Payload.
+                  Uji langsung operasi Tulis & Baca ke Supabase Database db_cip, pantau HTTP Status Code, Header Respon, serta isi Payload.
                 </p>
               </div>
             </div>
@@ -504,7 +504,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
               className="px-4 py-2.5 bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold rounded-xl flex items-center gap-2 shadow-md transition-all cursor-pointer disabled:opacity-50"
             >
               <Activity className={`w-4 h-4 ${isExecuting ? 'animate-spin' : ''}`} />
-              <span>4. Benchmark Latensi Atlas</span>
+              <span>4. Benchmark Latensi Supabase</span>
             </button>
           </div>
         </div>
@@ -519,7 +519,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
             </div>
             <div>
               <h4 className="font-extrabold text-sm text-slate-900">Pengujian Tulis Kunci & Payload Kustom</h4>
-              <p className="text-xs text-slate-500">Kirim data kustom langsung ke backend server MongoDB untuk memverifikasi respon</p>
+              <p className="text-xs text-slate-500">Kirim data kustom langsung ke backend server Supabase db_cip untuk memverifikasi respon</p>
             </div>
           </div>
           <span className="text-[11px] font-mono text-slate-400">Endpoint: POST /api/data</span>
@@ -606,7 +606,7 @@ export const MongoDiagnosticConsole: React.FC<MongoDiagnosticConsoleProps> = ({ 
             <Terminal className="w-12 h-12 mx-auto text-slate-700" />
             <p className="text-xs font-mono">Belum ada log diagnostik.</p>
             <p className="text-[11px] text-slate-600">
-              Klik salah satu tombol uji di atas untuk mengirim permintaan ke server backend MongoDB Atlas.
+              Klik salah satu tombol uji di atas untuk mengirim permintaan ke server backend Supabase db_cip.
             </p>
           </div>
         ) : (

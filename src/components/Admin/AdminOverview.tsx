@@ -59,7 +59,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
 
   const handleManualSync = async () => {
     setIsSyncing(true);
-    setSyncFeedback('Menghubungkan ke MongoDB Atlas...');
+    setSyncFeedback('Menghubungkan ke Supabase Database db_cip...');
     const result = await StorageService.forceSyncNow();
     setIsSyncing(false);
     setSyncFeedback(result.message);
@@ -111,7 +111,7 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h3 className="text-sm sm:text-base font-bold text-white">
-                Basis Data: MongoDB Atlas (Cloud Cluster db-compro)
+                Basis Data: Supabase Database (db_cip)
               </h3>
               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse" />

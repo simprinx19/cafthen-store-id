@@ -40,7 +40,7 @@ interface ServerDbStatus {
   environment: {
     isVercel: boolean;
     nodeEnv: string;
-    mongodbUriConfigured: boolean;
+    supabaseConfigured: boolean;
     databaseName: string;
     collectionName: string;
     maskedConnectionUri: string;
@@ -113,7 +113,7 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
 
   const handleForceSync = async () => {
     setIsLoading(true);
-    setActionNotice('Menyinkronkan data dengan cluster MongoDB Atlas...');
+    setActionNotice('Menyinkronkan data dengan Supabase Database (db_cip)...');
     const result = await StorageService.forceSyncNow();
     onDataUpdated();
     await fetchServerStatus();
@@ -132,12 +132,12 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `cafthen_mongodb_backup_${new Date().toISOString().slice(0, 10)}.json`;
+      a.download = `cafthen_supabase_db_cip_backup_${new Date().toISOString().slice(0, 10)}.json`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      setActionNotice('File cadangan database MongoDB Atlas berhasil diunduh!');
+      setActionNotice('File cadangan database Supabase db_cip berhasil diunduh!');
       setTimeout(() => setActionNotice(null), 4000);
     } catch (e: any) {
       alert('Error saat mengunduh cadangan: ' + e?.message);
@@ -157,7 +157,7 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
           throw new Error('Format file JSON tidak valid');
         }
 
-        if (!confirm('Apakah Anda yakin ingin memulihkan database dari file ini? Seluruh data di MongoDB Atlas akan diperbarui.')) {
+        if (!confirm('Apakah Anda yakin ingin memulihkan database dari file ini? Seluruh data di Supabase Database db_cip akan diperbarui.')) {
           return;
         }
 
@@ -172,7 +172,7 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
           await StorageService.forceSyncNow();
           onDataUpdated();
           await fetchServerStatus();
-          setActionNotice('Data berhasil dipulihkan dan disinkronkan ke MongoDB Atlas!');
+          setActionNotice('Data berhasil dipulihkan dan disinkronkan ke Supabase Database db_cip!');
         } else {
           throw new Error('Server menolak permintaan pemulihan');
         }
@@ -212,11 +212,11 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
                   Status Database & Variabel Vercel
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
                     <span className="w-2 h-2 rounded-full bg-emerald-400 mr-1.5 animate-ping" />
-                    MongoDB Atlas Terhubung
+                    Supabase Database (db_cip) Terhubung
                   </span>
                 </h2>
                 <p className="text-xs text-slate-300">
-                  Cluster: <span className="text-emerald-300 font-mono font-bold">db-compro.orkvkuj.mongodb.net</span> • Basis Data: <span className="text-amber-300 font-mono font-bold">db-compro</span> • Koleksi: <span className="text-sky-300 font-mono font-bold">app_storage</span>
+                  ID: <span className="text-emerald-300 font-mono font-bold">mgsqkkdjytqzodzmhwnv</span> • Basis Data: <span className="text-amber-300 font-mono font-bold">db_cip</span> • Tabel: <span className="text-sky-300 font-mono font-bold">app_storage</span>
                 </p>
               </div>
             </div>
@@ -229,7 +229,7 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
               className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-xl flex items-center gap-2 transition-all cursor-pointer shadow-md disabled:opacity-50"
             >
               <Activity className={`w-4 h-4 ${isTesting ? 'animate-spin' : ''}`} />
-              <span>{isTesting ? 'Menguji Tulis/Baca...' : 'Uji Tulis & Baca Atlas'}</span>
+              <span>{isTesting ? 'Menguji Tulis/Baca...' : 'Uji Tulis & Baca Supabase'}</span>
             </button>
 
             <button
@@ -282,7 +282,7 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
           <p className="text-2xl font-black text-slate-900">
             {serverStatus?.documentsCount || 13} Dokumen
           </p>
-          <p className="text-[11px] text-slate-500">100% tersimpan di Cloud MongoDB</p>
+          <p className="text-[11px] text-slate-500">100% tersimpan di Supabase db_cip</p>
         </div>
 
         <div className="p-5 bg-white rounded-2xl border border-slate-200 shadow-sm space-y-1">
@@ -330,20 +330,20 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
           <div className="space-y-3 text-xs">
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-mono font-bold text-slate-800">db_MONGODB_URI &amp; MONGODB_URI</span>
+                <span className="font-mono font-bold text-slate-800">SUPABASE_URL &amp; SUPABASE_ID</span>
                 <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[10px]">
                   Terpasang &amp; Terhubung
                 </span>
               </div>
               <p className="text-slate-500 text-[11px]">
-                URI Koneksi Cluster MongoDB Atlas (Database: <code className="text-emerald-700 font-bold">db-compro</code>).
+                URL Supabase Instance (Database: <code className="text-emerald-700 font-bold">db_cip</code>).
               </p>
               <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 font-mono text-[10px] text-slate-600">
-                <span className="truncate">mongodb+srv://Vercel-Admin-db_compro:***@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority</span>
+                <span className="truncate">https://mgsqkkdjytqzodzmhwnv.supabase.co</span>
                 <button
-                  onClick={() => copyToClipboard('mongodb+srv://Vercel-Admin-db_compro:A4UTfZd22cX8a9l7@db-compro.orkvkuj.mongodb.net/?retryWrites=true&w=majority', 'uri')}
+                  onClick={() => copyToClipboard('https://mgsqkkdjytqzodzmhwnv.supabase.co', 'uri')}
                   className="p-1 text-slate-400 hover:text-blue-600"
-                  title="Salin URI Lengkap"
+                  title="Salin URL Lengkap"
                 >
                   {copiedKey === 'uri' ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
                 </button>
@@ -352,32 +352,20 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
 
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-mono font-bold text-slate-800">Vercel Database Pool (@vercel/functions)</span>
+                <span className="font-mono font-bold text-slate-800">Supabase Client (@supabase/supabase-js)</span>
                 <span className="px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-md font-bold text-[10px]">
-                  attachDatabasePool(client)
+                  createClient(URL, KEY)
                 </span>
               </div>
               <p className="text-slate-500 text-[11px]">
-                Koneksi MongoClient menggunakan appName: <code className="text-indigo-600 font-mono font-bold">devrel.vercel.integration</code> dan pooling otomatis.
+                Koneksi SDK Supabase aktif terhubung ke instance: <code className="text-indigo-600 font-mono font-bold">mgsqkkdjytqzodzmhwnv</code>.
               </p>
             </div>
 
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-mono font-bold text-slate-800">Prisma Schema (prisma/schema.prisma)</span>
-                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded-md font-bold text-[10px]">
-                  provider = "mongodb"
-                </span>
-              </div>
-              <p className="text-slate-500 text-[11px]">
-                Skema Prisma aktif terhubung ke database <code className="text-slate-800 font-mono">db-compro</code>.
-              </p>
-            </div>
-
-            <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
-              <div className="flex items-center justify-between">
-                <span className="font-mono font-bold text-slate-800">MONGODB_DB_NAME / DB_NAME</span>
-                <span className="font-mono font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px]">db-compro</span>
+                <span className="font-mono font-bold text-slate-800">SUPABASE_DB_NAME / DB_NAME</span>
+                <span className="font-mono font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded text-[10px]">db_cip</span>
               </div>
               <p className="text-slate-500 text-[11px]">
                 Nama basis data utama tempat penyimpanan data company profile & transaksi.
@@ -386,11 +374,11 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
 
             <div className="p-3 bg-slate-50 border border-slate-200 rounded-2xl space-y-1.5">
               <div className="flex items-center justify-between">
-                <span className="font-mono font-bold text-slate-800">MONGODB_COLLECTION / COLLECTION_NAME</span>
+                <span className="font-mono font-bold text-slate-800">SUPABASE_TABLE / TABLE_NAME</span>
                 <span className="font-mono font-bold text-sky-700 bg-sky-100 px-2 py-0.5 rounded text-[10px]">app_storage</span>
               </div>
               <p className="text-slate-500 text-[11px]">
-                Koleksi tempat dokumen persistensi tersimpan secara atomik.
+                Tabel tempat dokumen persistensi tersimpan secara atomik.
               </p>
             </div>
 
@@ -399,7 +387,7 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
                 <Lock className="w-4 h-4 text-amber-600 shrink-0" /> Catatan Pengaturan di Vercel Dashboard:
               </p>
               <p className="text-[11px] leading-relaxed">
-                Di dashboard Vercel (<strong>Project Settings &gt; Environment Variables</strong>), Anda dapat menambahkan variabel <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">MONGODB_URI</code> untuk Production, Preview, dan Development. Sistem backend kami juga telah dilengkapi dengan fallback default otomatis sehingga data langsung tersimpan secara aman tanpa konfigurasi manual tambahan.
+                Di dashboard Vercel (<strong>Project Settings &gt; Environment Variables</strong>), Anda dapat menambahkan variabel <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">SUPABASE_ANON_KEY</code> atau <code className="bg-amber-100 px-1 py-0.5 rounded font-mono">SUPABASE_DB_NAME=db_cip</code> untuk Production, Preview, dan Development. Sistem backend kami telah terintegrasi secara aman.
               </p>
             </div>
           </div>
@@ -413,7 +401,7 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
                 <HardDrive className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="font-extrabold text-sm text-slate-900">Daftar Kunci Database MongoDB</h3>
+                <h3 className="font-extrabold text-sm text-slate-900">Daftar Kunci Database Supabase</h3>
                 <p className="text-xs text-slate-500">Semua modul yang tersinkronisasi otomatis antar perangkat</p>
               </div>
             </div>
@@ -489,7 +477,7 @@ export const AdminDatabaseSettings: React.FC<AdminDatabaseSettingsProps> = ({ on
         </div>
       </div>
 
-      {/* MongoDB Atlas Read/Write Diagnostic Console */}
+      {/* Supabase Database Read/Write Diagnostic Console */}
       <MongoDiagnosticConsole onDataUpdated={onDataUpdated} />
     </div>
   );

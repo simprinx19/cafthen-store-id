@@ -100,7 +100,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
 
   const handleForceSync = async () => {
     setIsSyncing(true);
-    setSyncNotice('Menghubungkan & menyinkronkan data dengan MongoDB Atlas...');
+    setSyncNotice('Menghubungkan & menyinkronkan data dengan Supabase Database db_cip...');
     const res = await StorageService.forceSyncNow();
     onDataUpdated();
     setIsSyncing(false);
@@ -219,7 +219,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
                 Dashboard Administrator • {company.storeName || 'CAFTHEN STORE ID'}
               </h1>
               <p className="text-[10px] text-amber-400 font-mono truncate">
-                Akun: cipindo • Cluster: MongoDB Atlas (db-compro)
+                Akun: cipindo • Database: Supabase (db_cip)
               </p>
             </div>
           </div>

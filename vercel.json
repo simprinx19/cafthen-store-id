@@ -43,8 +43,7 @@
   ],
   "functions": {
     "api/index.js": {
-      "maxDuration": 30,
-      "includeFiles": "dist/server.cjs"
+      "maxDuration": 30
     }
   }
 }

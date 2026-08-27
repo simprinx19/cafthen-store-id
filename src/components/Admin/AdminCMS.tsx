@@ -166,7 +166,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
   const handleResetFormToDatabase = () => {
     populateFormFromCompany(initialCompany);
     setIsDirty(false);
-    triggerNotice('Formulir telah disegarkan sesuai data terbaru dari Database MongoDB.');
+    triggerNotice('Formulir telah disegarkan sesuai data terbaru dari Supabase Database db_cip.');
   };
 
   // Team & Activities editing modals
@@ -307,8 +307,8 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
       setIsDirty(false);
       triggerNotice(
         success
-          ? '✓ Data Profil, Legalitas & Seluruh Teks Halaman Utama berhasil diperbarui dan tersimpan permanen ke Database MongoDB (db-compro)!'
-          : '✓ Data tersimpan ke memori lokal dan sedang disinkronkan ke Database MongoDB.'
+          ? '✓ Data Profil, Legalitas & Seluruh Teks Halaman Utama berhasil diperbarui dan tersimpan permanen ke Supabase Database (db_cip)!'
+          : '✓ Data tersimpan ke memori lokal dan sedang disinkronkan ke Supabase Database.'
       );
       onDataUpdated();
     } catch (err: any) {
@@ -813,7 +813,7 @@ export const AdminCMS: React.FC<AdminCMSProps> = ({
                 onClick={handleResetFormToDatabase}
                 disabled={isSaving}
                 className="py-2 px-3.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs flex items-center gap-1.5 border border-slate-300 transition-colors cursor-pointer disabled:opacity-50"
-                title="Batalkan perubahan lokal dan muat data terbaru dari MongoDB"
+                title="Batalkan perubahan lokal dan muat data terbaru dari Supabase Database"
               >
                 <RefreshCw className="w-3.5 h-3.5" /> Muat Ulang Database
               </button>

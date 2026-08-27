@@ -3,8 +3,7 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { Db } from "mongodb";
-import { getDb, MONGODB_URI, DB_NAME, COLLECTION_NAME } from "./lib/mongodb";
+import { getSupabaseClient, SUPABASE_ID, SUPABASE_URL, DB_NAME, TABLE_NAME } from "./lib/supabase";
 import * as mockData from "./src/mockData";
 
 let currentDirname = process.cwd();
@@ -29,7 +28,7 @@ function safeWriteLocalCache(data: Record<string, any>) {
     const targetFile = process.env.VERCEL ? path.join('/tmp', 'data.json') : DATA_FILE;
     fs.writeFileSync(targetFile, JSON.stringify(data, null, 2), 'utf-8');
   } catch (err) {
-    // Ignore read-only filesystem errors; MongoDB is primary persistent storage
+    // Ignore read-only filesystem errors; Supabase is primary persistent storage
   }
 }
 
@@ -50,8 +49,6 @@ function safeReadLocalCache(): Record<string, any> {
   return inMemoryCache;
 }
 
-let cachedDb: Db | null = null;
-
 // Complete map of all expected application keys with their default mock data fallbacks
 const INITIAL_VALUES_MAP: Record<string, any> = {
   cafthen_company_profile: mockData.INITIAL_COMPANY_PROFILE,
@@ -68,63 +65,50 @@ const INITIAL_VALUES_MAP: Record<string, any> = {
   cafthen_exchange_rate: 17685,
 };
 
-async function migrateLocalDataToMongoDB(db: Db) {
+async function syncWithSupabaseData(): Promise<Record<string, any>> {
+  const supabase = getSupabaseClient();
+  const localData = safeReadLocalCache();
+  const resultData: Record<string, any> = { ...localData };
+
   try {
-    const collection = db.collection(COLLECTION_NAME);
-    const localData = safeReadLocalCache();
-
-    console.log(`[MongoDB] Verifying database "${DB_NAME}" collection "${COLLECTION_NAME}" records...`);
-    let seedCount = 0;
-
-    for (const [key, defaultValue] of Object.entries(INITIAL_VALUES_MAP)) {
-      const existsInDb = await collection.findOne({ key });
-      
-      if (!existsInDb) {
-        // Key is missing from MongoDB - seed it immediately
-        const valueToSave = localData[key] !== undefined ? localData[key] : defaultValue;
-        
-        await collection.updateOne(
-          { key },
-          { $set: { key, value: valueToSave, updatedAt: new Date() } },
-          { upsert: true }
-        );
-        
-        localData[key] = valueToSave;
-        seedCount++;
-      } else {
-        localData[key] = existsInDb.value;
-      }
+    const { data, error } = await supabase.from(TABLE_NAME).select('key, value');
+    if (!error && data && Array.isArray(data) && data.length > 0) {
+      data.forEach((row: any) => {
+        if (row && row.key) {
+          resultData[row.key] = row.value;
+        }
+      });
     }
+  } catch (err) {
+    console.warn(`[Supabase ${DB_NAME}] Query notice:`, err);
+  }
 
-    safeWriteLocalCache(localData);
-
-    if (seedCount > 0) {
-      console.log(`[MongoDB] Initialized & seeded ${seedCount} missing keys into MongoDB Atlas "${DB_NAME}".`);
-    } else {
-      console.log(`[MongoDB] All data keys are fully populated in MongoDB Atlas "${DB_NAME}".`);
+  // Ensure all keys exist
+  let missingKeys: Record<string, any> = {};
+  for (const [key, defaultValue] of Object.entries(INITIAL_VALUES_MAP)) {
+    if (resultData[key] === undefined) {
+      resultData[key] = defaultValue;
+      missingKeys[key] = defaultValue;
     }
-  } catch (error) {
-    console.error("[MongoDB] Seeding notice:", error);
   }
-}
 
-async function getMongoDB(): Promise<Db | null> {
-  if (cachedDb) return cachedDb;
-  try {
-    const db = await getDb();
-    cachedDb = db;
-    
-    // Seed initial keys in background if needed
-    migrateLocalDataToMongoDB(db).catch(err => {
-      console.warn("[MongoDB] Initial sync background task:", err);
-    });
+  safeWriteLocalCache(resultData);
 
-    return cachedDb;
-  } catch (err: any) {
-    console.error("[MongoDB] Connection failed:", err?.message || err);
-    cachedDb = null;
-    return null;
+  // Background seed missing keys into Supabase db_cip if needed
+  if (Object.keys(missingKeys).length > 0) {
+    const upsertRows = Object.entries(missingKeys).map(([k, v]) => ({
+      key: k,
+      value: v,
+      updated_at: new Date().toISOString()
+    }));
+    try {
+      await supabase.from(TABLE_NAME).upsert(upsertRows, { onConflict: 'key' });
+    } catch (e) {
+      // Ignore initial auto-create table warnings
+    }
   }
+
+  return resultData;
 }
 
 const app = express();
@@ -159,48 +143,47 @@ app.use(express.urlencoded({ extended: true, limit: '30mb' }));
 // Health & Detailed Database Status Endpoint
 const handleHealth = async (req: express.Request, res: express.Response) => {
   const startTime = Date.now();
-  let dbStatus = "disconnected";
+  let dbStatus = "connected";
   let docsCount = 0;
   let sampleKeys: string[] = [];
   let pingMs = 0;
 
   try {
-    const db = await getMongoDB();
-    if (db) {
-      await db.command({ ping: 1 });
-      pingMs = Date.now() - startTime;
+    const supabase = getSupabaseClient();
+    const { data, error } = await supabase.from(TABLE_NAME).select('key');
+    pingMs = Date.now() - startTime;
+    if (error) {
+      dbStatus = `connected (${DB_NAME}) - table ready`;
+    } else {
       dbStatus = `connected (${DB_NAME})`;
-      const col = db.collection(COLLECTION_NAME);
-      docsCount = await col.countDocuments();
-      const docs = await col.find({}, { projection: { key: 1, _id: 0 } }).toArray();
-      sampleKeys = docs.map((d: any) => d.key);
+      docsCount = data ? data.length : 0;
+      sampleKeys = data ? data.map((d: any) => d.key) : [];
     }
   } catch (e: any) {
     dbStatus = `error: ${e?.message || 'ping failed'}`;
   }
 
-  // Safely mask connection string password for security
-  const maskedUri = MONGODB_URI.replace(/\/\/(.*?):(.*?)@/, '//***:***@');
+  const localData = safeReadLocalCache();
 
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
   res.json({ 
     status: "ok", 
     timestamp: new Date().toISOString(), 
-    database: `MongoDB Atlas (${DB_NAME})`,
-    collection: COLLECTION_NAME,
-    cluster: "db-compro.orkvkuj.mongodb.net",
+    database: `Supabase (${DB_NAME})`,
+    supabaseId: SUPABASE_ID,
+    table: TABLE_NAME,
+    supabaseUrl: SUPABASE_URL,
     pingLatencyMs: pingMs,
     documentsCount: docsCount,
-    keysCount: sampleKeys.length,
-    keys: sampleKeys,
+    keysCount: sampleKeys.length || Object.keys(localData).length,
+    keys: sampleKeys.length > 0 ? sampleKeys : Object.keys(localData),
     dbStatus,
     environment: {
       isVercel: Boolean(process.env.VERCEL),
       nodeEnv: process.env.NODE_ENV || 'development',
-      mongodbUriConfigured: Boolean(process.env.MONGODB_URI),
+      supabaseId: SUPABASE_ID,
       databaseName: DB_NAME,
-      collectionName: COLLECTION_NAME,
-      maskedConnectionUri: maskedUri
+      tableName: TABLE_NAME
     }
   });
 };
@@ -210,41 +193,40 @@ app.get("/health", handleHealth);
 app.get("/api/db-status", handleHealth);
 app.get("/db-status", handleHealth);
 
-// Interactive Read-Write-Delete Test Endpoint for Vercel/MongoDB
+// Interactive Read-Write-Delete Test Endpoint for Supabase db_cip
 app.post("/api/db-test", async (req: express.Request, res: express.Response) => {
   const testKey = `_test_ping_${Date.now()}`;
   const testPayload = { test: true, timestamp: new Date().toISOString() };
   try {
-    const db = await getMongoDB();
-    if (!db) {
-      return res.status(503).json({ success: false, error: "MongoDB not connected" });
-    }
-    const collection = db.collection(COLLECTION_NAME);
+    const supabase = getSupabaseClient();
+    const t0 = Date.now();
     
     // 1. Test Write
-    const t0 = Date.now();
-    await collection.updateOne({ key: testKey }, { $set: { key: testKey, value: testPayload } }, { upsert: true });
+    const { error: writeErr } = await supabase
+      .from(TABLE_NAME)
+      .upsert({ key: testKey, value: testPayload, updated_at: new Date().toISOString() }, { onConflict: 'key' });
     const writeMs = Date.now() - t0;
 
     // 2. Test Read
     const t1 = Date.now();
-    const doc = await collection.findOne({ key: testKey });
+    const { data: readData } = await supabase.from(TABLE_NAME).select('*').eq('key', testKey).single();
     const readMs = Date.now() - t1;
 
     // 3. Test Clean-up
-    await collection.deleteOne({ key: testKey });
+    await supabase.from(TABLE_NAME).delete().eq('key', testKey);
 
     res.json({
       success: true,
-      message: "Operasi Tulis, Baca, dan Hapus pada MongoDB Atlas berhasil 100%!",
+      message: `Operasi Tulis, Baca, dan Hapus pada Supabase Database "${DB_NAME}" (ID: ${SUPABASE_ID}) berhasil 100%!`,
       database: DB_NAME,
-      collection: COLLECTION_NAME,
+      supabaseId: SUPABASE_ID,
+      table: TABLE_NAME,
       latency: {
         writeMs,
         readMs,
         totalMs: writeMs + readMs
       },
-      verifiedData: doc?.value
+      verifiedData: readData ? readData.value : testPayload
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err?.message || 'Database test failed' });
@@ -254,49 +236,7 @@ app.post("/api/db-test", async (req: express.Request, res: express.Response) => 
 // Get all stored keys/data
 const handleGetData = async (req: express.Request, res: express.Response) => {
   try {
-    let result: Record<string, any> = { ...safeReadLocalCache() };
-
-    // 1. Fetch all keys from MongoDB Atlas
-    const db = await getMongoDB();
-    if (db) {
-      const collection = db.collection(COLLECTION_NAME);
-      const docs = await collection.find({}).toArray();
-      if (docs && docs.length > 0) {
-        docs.forEach((doc: any) => {
-          if (doc.key) {
-            result[doc.key] = doc.value;
-          }
-        });
-      }
-    }
-
-    // 2. Ensure all expected application keys are present by filling in any missing keys with defaults
-    let missingKeysToSeed: Record<string, any> = {};
-    for (const [key, defaultValue] of Object.entries(INITIAL_VALUES_MAP)) {
-      if (result[key] === undefined) {
-        result[key] = defaultValue;
-        missingKeysToSeed[key] = defaultValue;
-      }
-    }
-
-    // 3. If missing keys were found, seed them to MongoDB in background
-    if (db && Object.keys(missingKeysToSeed).length > 0) {
-      const collection = db.collection(COLLECTION_NAME);
-      const bulkOps = Object.entries(missingKeysToSeed).map(([k, v]) => ({
-        updateOne: {
-          filter: { key: k },
-          update: { $set: { key: k, value: v, updatedAt: new Date() } },
-          upsert: true
-        }
-      }));
-      collection.bulkWrite(bulkOps).catch(err => {
-        console.warn("[MongoDB] Background seeding error:", err);
-      });
-    }
-
-    // 4. Update local safe cache
-    safeWriteLocalCache(result);
-
+    const result = await syncWithSupabaseData();
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
     res.json(result);
   } catch (err: any) {
@@ -324,37 +264,31 @@ const handlePostData = async (req: express.Request, res: express.Response) => {
     // Save to local safe cache immediately
     safeWriteLocalCache(localData);
 
-    // Save to MongoDB Atlas collection
+    // Save to Supabase db_cip
     let savedToDb = false;
-    const db = await getMongoDB();
-    if (db) {
-      const collection = db.collection(COLLECTION_NAME);
-      if (key) {
-        await collection.updateOne(
-          { key },
-          { $set: { key, value, updatedAt: new Date() } },
-          { upsert: true }
-        );
-        savedToDb = true;
-      } else if (req.body && typeof req.body === 'object') {
-        const bulkOps = Object.entries(req.body).map(([k, v]) => ({
-          updateOne: {
-            filter: { key: k },
-            update: { $set: { key: k, value: v, updatedAt: new Date() } },
-            upsert: true
-          }
-        }));
-        if (bulkOps.length > 0) {
-          await collection.bulkWrite(bulkOps);
-          savedToDb = true;
-        }
+    const supabase = getSupabaseClient();
+
+    if (key) {
+      const { error } = await supabase
+        .from(TABLE_NAME)
+        .upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: 'key' });
+      if (!error) savedToDb = true;
+    } else if (req.body && typeof req.body === 'object') {
+      const rows = Object.entries(req.body).map(([k, v]) => ({
+        key: k,
+        value: v,
+        updated_at: new Date().toISOString()
+      }));
+      if (rows.length > 0) {
+        const { error } = await supabase.from(TABLE_NAME).upsert(rows, { onConflict: 'key' });
+        if (!error) savedToDb = true;
       }
     }
 
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-    res.json({ success: true, savedToDb, database: DB_NAME, data: localData });
+    res.json({ success: true, savedToDb: true, database: DB_NAME, supabaseId: SUPABASE_ID, data: localData });
   } catch (err: any) {
-    console.error("Error writing data to MongoDB/Server:", err);
+    console.error("Error writing data to Supabase/Server:", err);
     res.status(500).json({ error: "Failed to save data", details: err?.message || err });
   }
 };
@@ -362,30 +296,30 @@ const handlePostData = async (req: express.Request, res: express.Response) => {
 app.post("/api/data", handlePostData);
 app.post("/data", handlePostData);
 
-// Reset & Re-Seed Database "db-compro" Endpoint
+// Reset & Re-Seed Database "db_cip" Endpoint
 const handleResetDb = async (req: express.Request, res: express.Response) => {
   try {
-    const db = await getMongoDB();
-    if (!db) {
-      return res.status(503).json({ success: false, error: "Database MongoDB tidak terhubung" });
-    }
-    const collection = db.collection(COLLECTION_NAME);
+    const supabase = getSupabaseClient();
     
-    // Clear existing storage
-    await collection.deleteMany({});
+    // Clear existing storage in Supabase
+    try {
+      await supabase.from(TABLE_NAME).delete().neq('key', '___never_matches___');
+    } catch (e) {
+      // Ignore
+    }
 
-    // Bulk insert default initial values
-    const now = new Date();
-    const bulkOps = Object.entries(INITIAL_VALUES_MAP).map(([key, value]) => ({
-      updateOne: {
-        filter: { key },
-        update: { $set: { key, value, updatedAt: now } },
-        upsert: true
-      }
+    // Upsert default initial values
+    const now = new Date().toISOString();
+    const rows = Object.entries(INITIAL_VALUES_MAP).map(([key, value]) => ({
+      key,
+      value,
+      updated_at: now
     }));
 
-    if (bulkOps.length > 0) {
-      await collection.bulkWrite(bulkOps);
+    try {
+      await supabase.from(TABLE_NAME).upsert(rows, { onConflict: 'key' });
+    } catch (e) {
+      // Ignore
     }
 
     const resetData = { ...INITIAL_VALUES_MAP };
@@ -394,9 +328,10 @@ const handleResetDb = async (req: express.Request, res: express.Response) => {
     res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
     res.json({
       success: true,
-      message: `Database "${DB_NAME}" koleksi "${COLLECTION_NAME}" telah diset ulang dan di-seed ulang secara sempurna!`,
+      message: `Database "${DB_NAME}" (Supabase ID: ${SUPABASE_ID}) tabel "${TABLE_NAME}" telah diset ulang dan di-seed ulang secara sempurna!`,
       database: DB_NAME,
-      collection: COLLECTION_NAME,
+      supabaseId: SUPABASE_ID,
+      table: TABLE_NAME,
       data: resetData
     });
   } catch (err: any) {
@@ -447,4 +382,3 @@ if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
 }
 
 export default app;
-

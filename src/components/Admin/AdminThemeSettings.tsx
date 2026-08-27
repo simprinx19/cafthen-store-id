@@ -81,7 +81,7 @@ export const AdminThemeSettings: React.FC<AdminThemeSettingsProps> = ({ onDataUp
             Ubah Tema Halaman Depan & Dashboard
           </h2>
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-            Sesuaikan palet warna primer, warna aksen, gaya dashboard, dan nuansa visual website utama serta portal admin. Perubahan tersimpan di database MongoDB Atlas dan otomatis diterapkan ke seluruh perangkat konsumen & staf.
+            Sesuaikan palet warna primer, warna aksen, gaya dashboard, dan nuansa visual website utama serta portal admin. Perubahan tersimpan di database Supabase (db_cip) dan otomatis diterapkan ke seluruh perangkat konsumen & staf.
           </p>
         </div>
 
@@ -114,7 +114,7 @@ export const AdminThemeSettings: React.FC<AdminThemeSettingsProps> = ({ onDataUp
       {saveSuccess && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-bold flex items-center gap-3 shadow-sm animate-bounce">
           <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-          <span>Tema dan warna visual berhasil disimpan ke MongoDB Atlas! Seluruh browser dan perangkat pengunjung akan otomatis memuat tema ini.</span>
+          <span>Tema dan warna visual berhasil disimpan ke Supabase Database (db_cip)! Seluruh browser dan perangkat pengunjung akan otomatis memuat tema ini.</span>
         </div>
       )}
 
@@ -562,7 +562,7 @@ export const AdminThemeSettings: React.FC<AdminThemeSettingsProps> = ({ onDataUp
               className="w-full sm:w-auto px-6 py-2.5 rounded-2xl text-xs font-black flex items-center justify-center gap-2 shadow-md hover:brightness-110 transition-all cursor-pointer"
             >
               {saveSuccess ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-              <span>{saveSuccess ? 'Tema Tersimpan di MongoDB!' : 'Simpan & Terapkan Tema'}</span>
+              <span>{saveSuccess ? 'Tema Tersimpan di Supabase!' : 'Simpan & Terapkan Tema'}</span>
             </button>
           </div>
         </div>

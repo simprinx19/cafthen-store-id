@@ -56,7 +56,7 @@ const KEYS = {
 
 export const DEFAULT_EXCHANGE_RATE = 17685; // 1 USD = Rp 17.685 (Mengikuti Google Market Rate)
 
-// MongoDB Atlas Connection & Retry Types
+// Supabase Database Connection & Retry Types
 export type DbConnectionState = 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'error';
 
 export interface DbConnectionInfo {
@@ -78,8 +78,8 @@ export interface PendingWriteItem {
   retryAttempts: number;
 }
 
-const DB_NAME = 'db-compro';
-const CLUSTER_NAME = 'MongoDB Atlas (db-compro)';
+const DB_NAME = 'db_cip';
+const CLUSTER_NAME = 'Supabase Database (db_cip - mgsqkkdjytqzodzmhwnv)';
 const PENDING_QUEUE_KEY = 'cafthen_pending_db_sync_queue';
 const MAX_RETRY_ATTEMPTS = 4;
 const INITIAL_BACKOFF_MS = 1000;
@@ -250,13 +250,13 @@ async function fetchWithRetry(
       // Only warn on multiple failed attempts to avoid log clutter during cold-starts
       if (attempt > 1) {
         console.warn(
-          `[MongoDB Atlas Sync] Reconnecting... attempt ${attempt}/${maxRetries} (${err?.message || 'Network drop'}).`
+          `[Supabase db_cip Sync] Reconnecting... attempt ${attempt}/${maxRetries} (${err?.message || 'Network drop'}).`
         );
       }
 
       updateDbStatus({
         state: 'reconnecting',
-        lastError: `Reconnecting to MongoDB Atlas (${attempt}/${maxRetries}): ${err?.message || 'Network drop'}`,
+        lastError: `Reconnecting to Supabase Database db_cip (${attempt}/${maxRetries}): ${err?.message || 'Network drop'}`,
         retryCount: attempt
       });
 
@@ -294,7 +294,7 @@ async function flushPendingQueue(): Promise<boolean> {
           clearLocalUpdate(item.key);
         }
       } catch (err: any) {
-        console.warn(`[MongoDB Atlas Sync] Failed to flush queued write for key "${item.key}":`, err?.message);
+        console.warn(`[Supabase db_cip Sync] Failed to flush queued write for key "${item.key}":`, err?.message);
         break;
       }
     }
@@ -314,13 +314,13 @@ async function flushPendingQueue(): Promise<boolean> {
 // Auto-recovery listeners on browser
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => {
-    console.log('[MongoDB Atlas] Browser back online. Resuming sync & flushing write queue...');
+    console.log('[Supabase db_cip] Browser back online. Resuming sync & flushing write queue...');
     updateDbStatus({ isOnline: true, state: 'reconnecting' });
     StorageService.syncWithServer();
   });
 
   window.addEventListener('offline', () => {
-    console.warn('[MongoDB Atlas] Browser is offline. All writes will queue locally.');
+    console.warn('[Supabase db_cip] Browser is offline. All writes will queue locally.');
     updateDbStatus({ isOnline: false, state: 'disconnected', lastError: 'Perangkat sedang offline' });
   });
 }
@@ -335,7 +335,7 @@ function getStored<T>(key: string, fallback: T): T {
   }
 }
 
-// Direct atomic write to both LocalStorage and MongoDB Atlas
+// Direct atomic write to both LocalStorage and Supabase Database db_cip
 async function saveDirectToServer(key: string, value: any): Promise<boolean> {
   // 1. Save to localStorage immediately and trigger reactive DOM updates
   try {
@@ -349,7 +349,7 @@ async function saveDirectToServer(key: string, value: any): Promise<boolean> {
     console.error(`Error saving ${key} to local storage:`, e);
   }
 
-  // 2. Direct asynchronous write to MongoDB Atlas via serverless /api/data
+  // 2. Direct asynchronous write to Supabase Database db_cip via serverless /api/data
   try {
     updateDbStatus({ state: 'connecting', lastError: null });
     const res = await fetchWithRetry(
@@ -378,7 +378,7 @@ async function saveDirectToServer(key: string, value: any): Promise<boolean> {
       throw new Error(`HTTP Error ${res.status}`);
     }
   } catch (err: any) {
-    console.warn(`[MongoDB Atlas] Direct save failed (${err?.message}). Queued for background sync.`);
+    console.warn(`[Supabase db_cip] Direct save failed (${err?.message}). Queued for background sync.`);
     enqueuePendingWrite(key, value);
     return false;
   }
@@ -433,7 +433,7 @@ export const StorageService = {
           }
         }
         window.dispatchEvent(new Event('cafthen_storage_updated'));
-        return { ok: true, message: data.message || 'Database "db-compro" diset ulang secara sukses', database: data.database };
+        return { ok: true, message: data.message || 'Database "db_cip" diset ulang secara sukses', database: data.database };
       }
       throw new Error(`Reset error: HTTP ${res.status}`);
     } catch (err: any) {
@@ -462,7 +462,7 @@ export const StorageService = {
       // 1. Flush any pending offline/intermittent writes first
       await flushPendingQueue();
 
-      // 2. Fetch latest state from server / MongoDB Atlas with retry logic
+      // 2. Fetch latest state from server / Supabase Database db_cip with retry logic
       const res = await fetchWithRetry('/api/data', { method: 'GET' }, maxRetries);
       if (res.ok) {
         const serverData = await res.json();
@@ -540,7 +540,7 @@ export const StorageService = {
       await flushPendingQueue();
       const ok = await this.syncWithServer({ maxRetries: 3 });
       if (ok) {
-        return { ok: true, message: 'Data berhasil disinkronkan secara realtime dengan MongoDB Atlas!' };
+        return { ok: true, message: 'Data berhasil disinkronkan secara realtime dengan Supabase Database db_cip!' };
       }
       return { ok: false, message: 'Sinkronisasi selesai dengan cache lokal.' };
     } catch (e: any) {
