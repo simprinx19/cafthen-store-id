@@ -4,7 +4,7 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 import { Db } from "mongodb";
-import client, { getDb, MONGODB_URI, DB_NAME, COLLECTION_NAME } from "./lib/mongodb";
+import { getDb, MONGODB_URI, DB_NAME, COLLECTION_NAME } from "./lib/mongodb";
 import * as mockData from "./src/mockData";
 
 let currentDirname = process.cwd();
