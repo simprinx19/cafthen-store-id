@@ -5,23 +5,23 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.js"
+      "destination": "/api/index.ts"
     },
     {
       "source": "/health",
-      "destination": "/api/index.js"
+      "destination": "/api/index.ts"
     },
     {
       "source": "/db-status",
-      "destination": "/api/index.js"
+      "destination": "/api/index.ts"
     },
     {
       "source": "/data",
-      "destination": "/api/index.js"
+      "destination": "/api/index.ts"
     },
     {
       "source": "/reset-db",
-      "destination": "/api/index.js"
+      "destination": "/api/index.ts"
     },
     {
       "source": "/((?!api/).*)",
@@ -42,7 +42,7 @@
     }
   ],
   "functions": {
-    "api/index.js": {
+    "api/index.ts": {
       "maxDuration": 30
     }
   }
