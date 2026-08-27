@@ -3,13 +3,20 @@ import express from "express";
 import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
-import { createServer as createViteServer } from "vite";
 import { Db } from "mongodb";
-import client, { getDb, MONGODB_URI, DB_NAME, COLLECTION_NAME } from "./lib/mongodb.ts";
-import * as mockData from "./src/mockData.ts";
+import client, { getDb, MONGODB_URI, DB_NAME, COLLECTION_NAME } from "./lib/mongodb";
+import * as mockData from "./src/mockData";
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let currentDirname = process.cwd();
+try {
+  if (typeof __dirname !== "undefined") {
+    currentDirname = __dirname;
+  } else if (typeof import.meta !== "undefined" && import.meta && import.meta.url) {
+    currentDirname = path.dirname(fileURLToPath(import.meta.url));
+  }
+} catch {
+  currentDirname = process.cwd();
+}
 
 const DATA_FILE = path.join(process.cwd(), 'data.json');
 
@@ -416,15 +423,17 @@ if (!process.env.VERCEL) {
 }
 
 // Optional Vite middleware for development mode
-if (process.env.NODE_ENV !== "production") {
-  createViteServer({
-    server: { middlewareMode: true },
-    appType: "spa",
-  }).then(vite => {
-    app.use(vite.middlewares);
-  }).catch(err => {
-    console.warn("Vite dev server middleware warning:", err);
-  });
+if (process.env.NODE_ENV !== "production" && !process.env.VERCEL) {
+  import("vite").then(({ createServer: createViteServer }) => {
+    createViteServer({
+      server: { middlewareMode: true },
+      appType: "spa",
+    }).then(vite => {
+      app.use(vite.middlewares);
+    }).catch(err => {
+      console.warn("Vite dev server middleware warning:", err);
+    });
+  }).catch(() => {});
 }
 
 export default app;
